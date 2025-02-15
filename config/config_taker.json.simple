@@ -1,0 +1,17 @@
+{
+    "site":"https://earn.taker.xyz/",
+    "sitekey":"0x4AAAAAAA4ve7ZW4oTHaChP",
+    "cf_task":true,
+    "cf_api_url":"http://127.0.0.1:3000/cf-clearance-scraper",
+    "cf_api_key":null,
+    "cf_api_method":"turnstile-min",
+    "RETRY_INTERVAL":3,
+    "RETRY_COUNT":3,
+    "rpc_url":"https://rpc-mainnet.taker.xyz/",
+    "proxy":"http://xxx:xxx@xxx:xxx",
+    "chain_id":1125,
+    "account_path":"./data/account_taker.csv",
+    "invite_code":"邀请码",
+    "max_worker":20
+
+}
