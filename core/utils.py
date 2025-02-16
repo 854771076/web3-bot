@@ -21,7 +21,7 @@ import json
 import hashlib
 import random
 from ratelimit import limits, sleep_and_retry
-REQUESTS_PER_SECOND = 20
+REQUESTS_PER_SECOND = 10
 ONE_SECOND = 1
 def send_transaction(web3,transaction,private_key):
     signed_tx = web3.eth.account.sign_transaction(transaction,private_key)
