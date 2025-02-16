@@ -81,7 +81,7 @@ class TakerBot(BaseBot):
             self.account['bind_x']=True
             self.config.save_accounts()
             logger.success(f"账户:{self.wallet.address},{msg},x绑定成功")
-        xauth=XAuth(self.account.get('x_token'),proxies=self.proxies)
+        xauth=XAuth(self.account.get('x_token'))
         try:
             oauth_token=xauth.oauth2(url)
         except Exception as e:
