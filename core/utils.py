@@ -231,7 +231,8 @@ class XAuth:
         self._handle_response(response, retry)
         if  "redirect_uri" not in response.text:
             raise ValueError("响应中未找到redirect_uri")
-        return auth_code
+        redirect_uri=response.json().get("redirect_uri")
+        return auth_code,redirect_uri
 @sleep_and_retry
 @limits(calls=REQUESTS_PER_SECOND, period=ONE_SECOND)
 def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000',authToken=None):

@@ -83,7 +83,7 @@ class TakerBot(BaseBot):
             logger.success(f"账户:{self.wallet.address},{msg},x绑定成功")
         xauth=XAuth(self.account.get('x_token'))
         try:
-            oauth_token=xauth.oauth2(url)
+            oauth_token=xauth.oauth2(url)[0]
         except Exception as e:
             if "Bad Token" in str(e):
                 self.account['x_token_bad']=True

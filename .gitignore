@@ -2,3 +2,4 @@ account.csv
 config/*.json
 data/*.csv
 __pycache__
+test.py
