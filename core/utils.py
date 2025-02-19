@@ -4,7 +4,6 @@ import time
 from functools import *
 from typing import *
 from urllib.parse import urlparse, parse_qs
-
 from loguru import logger
 from fake_useragent import UserAgent
 from web3 import Web3
@@ -21,18 +20,515 @@ import json
 import hashlib
 import random
 from ratelimit import limits, sleep_and_retry
+import email
+import email.header
+import imaplib
+import re
+from email.header import decode_header
+from datetime import datetime
+import urllib
 REQUESTS_PER_SECOND = 10
 ONE_SECOND = 1
+from web3 import Web3
+from web3.exceptions import ContractLogicError
+import requests
+from loguru import logger
+from eth_account.messages import encode_defunct
+class Web3Tool:
+    def __init__(self, rpc_url='https://rpc.ankr.com/eth/xxx',chain_id=1,explorer=None):
+        """
+        初始化 Web3Tool 类实例
+        
+        :param rpc_url: 以太坊节点的 RPC URL
+        :param private_key: （可选）用于发送交易的私钥
+        """
+        self.web3 = Web3(Web3.HTTPProvider(rpc_url))
+        self.chain_id=chain_id
+        self.explorer=explorer
+        if not self.web3.is_connected():
+            logger.warning(f"无法连接到节点 {rpc_url},正在重试")
+            return self.__init__(rpc_url,chain_id,explorer)
+
+        
+    def get_contract_transaction_gas_limit(self,func,address):
+        '''
+        估算所需的 gas
+        '''
+        max_fee_cap = Web3.to_wei(100, 'ether')
+        gas_estimate = func.estimate_gas({
+        'from': address
+        })
+        # 获取当前 gas 价格
+        gas_price = self.web3.eth.gas_price
+        # 获取账户余额
+        balance = self.web3.eth.get_balance(address)
+        # 计算总费用
+        total_cost = gas_estimate * gas_price
+        # 判断 gas 或转账是否合理
+        if total_cost > balance:
+            ValueError('gas不足改日领水后重试')
+        if total_cost > max_fee_cap:
+            # 如果超出上限，调整费用为 1 ETH
+            gas_estimate = max_fee_cap / gas_price
+            gas_estimate = int(gas_estimate)  # 将价格转换为整数
+        # 返回估算的 gas
+        return gas_estimate
+    def run_contract(self, func, account,value=None):
+        '''
+        执行合约
+        '''
+        try:
+            checksum_address = self.web3.to_checksum_address(account.address)
+            try:
+                gas_limit = self.get_contract_transaction_gas_limit(func,checksum_address )
+            except:
+                gas_limit=210000
+            nonce = self.web3.eth.get_transaction_count(checksum_address)
+            if value:
+                transaction = func.build_transaction({
+                'chainId': self.chain_id,
+                'gas': int(gas_limit),
+                'gasPrice': int(self.web3.eth.gas_price),
+                'nonce': nonce,
+                'value':self.web3.to_wei(value, 'ether')
+                })
+            else:
+                transaction = func.build_transaction({
+                    'chainId': self.chain_id,
+                    'gas': int(gas_limit),
+                    'gasPrice': int(self.web3.eth.gas_price),
+                    'nonce': nonce
+                })
+            signed_transaction = self.web3.eth.account.sign_transaction(transaction, private_key=account.key)
+            
+            # 确保网络已准备好接收
+            tx_hash = self.web3.eth.send_raw_transaction(signed_transaction.rawTransaction)
+            
+            # 等待交易被挖矿
+            try:
+                status = self.web3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+            except Exception as e:
+                
+                logger.warning(f"Error waiting for transaction receipt: {e}")
+                return tx_hash, False
+
+            return tx_hash, status.status
+        except Exception as e:
+            if 'nonce too low' in str(e):
+                return None, True
+            raise TimeoutError(f"Error in running contract function: {e}")
+    
+    def get_ERC20_balance(self,address,type='ERC-20'):
+        '''
+        获取钱包余额
+        '''
+        # 获取账户余额（单位是 Wei）
+        balance={}
+        balance_wei = self.web3.eth.get_balance(address)
+        # 将余额从 Wei 转换为 Ether
+        balance_ether = self.web3.from_wei(balance_wei, 'ether')
+        balance['ETH']=round(float(balance_ether),5)
+        if self.explorer:
+            response = requests.get(f'{self.explorer}/api/v2/addresses/{address}/tokens', params={
+                'type': type,
+            })
+            data=response.json().get('items',[])
+            
+            for token in data:
+                balance[token['token']['symbol']]=round(int(token['value'])/(10**int(token['token']['decimals'])),5)
+        return balance
+    def get_conn(self):
+        return self.web3
+    
+    def get_balance(self, address):
+        """
+        获取指定地址的余额
+        
+        :param address: 以太坊地址
+        :return: 以太币为单位的余额
+        """
+        balance_wei = self.web3.eth.get_balance(address)
+        return self.web3.from_wei(balance_wei, 'ether')
+    
+    def send_transaction(self, to_address, value_in_ether, gas=21000, gas_price=None):
+        """
+        发送以太币交易
+        
+        :param to_address: 接收方地址
+        :param value_in_ether: 发送的以太币数量
+        :param gas: 燃气上限
+        :param gas_price: 燃气价格（可选）
+        :return: 交易哈希
+        """
+        if not self.account:
+            raise ValueError("私钥未设置，无法发送交易")
+        
+        value_wei = self.web3.to_wei(value_in_ether, 'ether')
+
+        tx = {
+            'to': to_address,
+            'value': value_wei,
+            'gas': gas,
+            'chainId': self.chain_id ,
+            'gasPrice': gas_price or self.web3.eth.gas_price,
+            'nonce': self.web3.eth.get_transaction_count(self.account.address),
+        }
+
+        signed_tx = self.web3.eth.account.sign_transaction(tx, self.private_key)
+        tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        try:
+            status = self.web3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
+        except Exception as e:
+            if 'low gas price' in str(e):
+                pass
+        return self.web3.to_hex(tx_hash)
+    
+    def deploy_contract(self, compiled_contract, constructor_args=()):
+        """
+        部署智能合约
+        
+        :param compiled_contract: 编译后的合约对象（ABI 和 Bytecode）
+        :param constructor_args: 构造函数的参数
+        :return: 合约地址
+        """
+        if not self.account:
+            raise ValueError("私钥未设置，无法部署合约")
+        
+        contract = self.web3.eth.contract(abi=compiled_contract['abi'], bytecode=compiled_contract['bytecode'])
+        tx = contract.constructor(*constructor_args).build_transaction({
+            'from': self.account.address,
+            'nonce': self.web3.eth.get_transaction_count(self.account.address),
+            'gas': 3000000,
+            'gasPrice': self.web3.eth.gas_price,
+        })
+
+        signed_tx = self.web3.eth.account.sign_transaction(tx, self.private_key)
+        tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+
+        return tx_receipt.contractAddress
+    
+    def load_contract(self, address, abi):
+        """
+        加载已部署的智能合约
+        
+        :param address: 合约地址
+        :param abi: 合约的 ABI
+        :return: 合约对象
+        """
+        return self.web3.eth.contract(address=address, abi=abi)
+    
+    def call_contract_function(self, contract, function_name, *args):
+        """
+        调用智能合约的只读方法
+        
+        :param contract: 合约对象
+        :param function_name: 合约方法名称
+        :param args: 合约方法参数
+        :return: 方法的返回值
+        """
+        try:
+            func = contract.functions[function_name](*args)
+            return func.call()
+        except ContractLogicError as e:
+            print(f"合约方法调用错误: {e}")
+            return None
+    
+    def send_contract_transaction(self, contract, function_name, *args, gas=300000, gas_price=None):
+        """
+        调用智能合约的修改状态方法并发送交易
+        
+        :param contract: 合约对象
+        :param function_name: 合约方法名称
+        :param args: 合约方法参数
+        :param gas: 燃气上限
+        :param gas_price: 燃气价格（可选）
+        :return: 交易哈希
+        """
+        if not self.account:
+            raise ValueError("私钥未设置，无法发送交易")
+
+        func = contract.functions[function_name](*args)
+        tx = func.buildTransaction({
+            'from': self.account.address,
+            'nonce': self.web3.eth.get_transaction_count(self.account.address),
+            'gas': gas,
+            'gasPrice': gas_price or self.web3.eth.gas_price,
+        })
+
+        signed_tx = self.web3.eth.account.sign_transaction(tx, self.private_key)
+        tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+        return self.web3.toHex(tx_hash)
+    def sign_msg(self,private_key,msg):
+        '''
+        钱包签名
+        '''
+        # 使用web3.py编码消息
+        message_encoded = encode_defunct(text=msg)
+        # 签名消息
+        signed_message = self.web3.eth.account.sign_message(message_encoded,private_key)
+        # 打印签名的消息
+        sign=signed_message.signature.hex()
+        if '0x' not in sign:
+            sign ='0x'+sign
+        return sign
+    def get_NFTs(self,address):
+        '''
+        获取NFT列表
+        '''
+        # 获取账户余额（单位是 Wei）
+        balance={}
+        response = requests.get(f'{self.explorer}/api/v2/addresses/{address}/nft/collections', params={'type':''})
+        data=response.json().get('items',[])
+        for token in data:
+            balance[token['token']['symbol']]={'id':int(token['token_instances'][0]['id']),'amount':int(token['amount'])}
+        return balance
+    def generate_wallet(self):
+        '''
+        生成钱包
+        '''
+        # 生成新账户
+        account = self.web3.eth.account.create()
+        # 获取地址和私钥
+        address = account.address
+        try:
+            private_key = account.privateKey.hex()
+        except:
+            private_key = account._private_key.hex()
+        return address,private_key
+
+class Discord_Sync:
+    def __init__(self, auth_token,proxies=None):
+        self.auth_token = auth_token
+        self.ua= UserAgent(platforms='desktop')
+        defaulf_cookies = {
+             '__dcfduid': '3d140d46d98711eebab5628f4db44770',
+            '__sdcfduid': '3d140d46d98711eebab5628f4db4477037ec5e693d8df63143030b8c7a6f18c1f2c7992ba4eed1ac52f472f0e14d2230',
+            '_ga': 'GA1.1.1892447230.1726278577',
+            '_ga_YL03HBJY7E': 'GS1.1.1726278577.1.1.1726278595.0.0.0',
+            'locale': 'zh-CN',
+            '_gcl_au': '1.1.2053326885.1726278823',
+            '_cfuvid': '6OfqLdiT7YMf2xQ8H77iRt2Bm2mJ_7v8QfMl5cOr17w-1728529581965-0.0.1.1-604800000',
+            'cf_clearance': 'eIKWWFmw01Q8ojymWZIrt0yktm9DmBXDV6W9zba2_3c-1728529594-1.2.1.1-ycvJ1UVtNe5stNeqmkcMyM.eFt6T8kW8IAVDyWFOLV1RiDM1aBFaVzHylYPxc_zRcC8z5fYdhPipzn.Uq5HcX7bxBVaWvaiyjOiSA59Iu4grU9njEprHYitZgJRkjVa60ddNcuISWM1clr7GVBIcrP91CmEav.fBKTwj5_vos0CbaPX4oW..4iYFAkIZMAhHdYrZPZQRfghE390YpbNkvoRjeagHKV01NAPiBR7AMDCx_mq37inFUgswTfHyRsBvB0NlDwnRx.qD.yrwG.oqXcixRNjimb1E4mjgfBcCWFl7zKHbhOxqexwClL7LFnZIUCt582d.EmXG5m1kMWxDVSnaelii5hwZWgm6jNyhF4s7fbnK7l7eIq89RwSUGGLD2E2nFxSImBdza1aNs_e4Hw',
+            'OptanonConsent': 'isIABGlobal=false&datestamp=Thu+Oct+10+2024+11%3A06%3A34+GMT%2B0800+(%E4%B8%AD%E5%9B%BD%E6%A0%87%E5%87%86%E6%97%B6%E9%97%B4)&version=6.33.0&hosts=&landingPath=https%3A%2F%2Fdiscord.com%2F&groups=C0001%3A1%2CC0002%3A1%2CC0003%3A1',
+            '_ga_Q149DFWHT7': 'GS1.1.1728529595.1.0.1728529607.0.0.0',
+            '__cfruid': 'e54bfe3eabe5032c48af7cba343ce579d4bdf1bc-1728529886'
+        }
+        defaulf_headers = {
+            "authority": "x.com",
+            "origin": "https://x.com",
+            "x-Discord-active-user": "yes",
+            "x-Discord-client-language": "en",
+            "authorization": auth_token,
+            "user-agent":self.ua.edge,
+            'Origin': 'https://discord.com',
+            'Pragma': 'no-cache',
+            'Referer': 'https://discord.com/oauth2/authorize?client_id=1237047186513072168&redirect_uri=https%3A%2F%2Fapi.superstellar.world%2Fapi%2Fv1%2Faccount%2Fconnect-discord%2Fcallback&response_type=code&scope=identify+guilds+guilds.members.read&state=8d690ab0051758bf4bb7d8a4672c78d00c9405bcc45619d655e50f4b55b8195e',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'X-Debug-Options': 'bugReporterEnabled',
+            'X-Discord-Locale': 'zh-CN',
+            'X-Discord-Timezone': 'Asia/Shanghai',
+            'sec-ch-ua': '"Microsoft Edge";v="129", "Not=A?Brand";v="8", "Chromium";v="129"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"'
+        }
+        if proxies:
+            self.Discord = Session(headers=defaulf_headers, cookies=defaulf_cookies, timeout=120,impersonate='edge99',proxies=proxies)
+        else:
+            self.Discord = Session(headers=defaulf_headers, cookies=defaulf_cookies, timeout=120,impersonate='edge99')
+        self.auth_code = None
+        self.auth_success = False  # 增加标志位记录授权是否成功
+    def get_auth_codeV2(self, client_id, state, redirect_uri,scope,integration_type='0',response_type='code'):
+        # 如果已经授权成功，直接返回 True，不再进行授权
+        if self.auth_success:
+            logger.info(f'{self.auth_token} 已成功授权，跳过重新授权')
+            return True
+
+        try:
+            params = {
+                'integration_type': urllib.parse.unquote(integration_type),
+                'client_id': urllib.parse.unquote(client_id),
+                'redirect_uri': urllib.parse.unquote(redirect_uri),
+                'response_type': urllib.parse.unquote(response_type),
+                'scope': urllib.parse.unquote(scope).replace('+',' '),
+                'state': state
+            }
+            
+            response = self.Discord.get('https://discord.com/api/v9/oauth2/authorize', params=params)
+            if "code" in response.json() and response.json()["code"] == 353:
+                self.Discord.headers.update({"x-csrf-token": response.cookies["ct0"]})
+                logger.warning(f'{response.json()}')
+                return self.get_auth_codeV2(client_id, state, redirect_uri,scope,integration_type,response_type)
+            elif response.status_code == 429:
+                time.sleep(5)
+                return self.get_auth_codeV2(client_id, state,redirect_uri,scope,integration_type,response_type)
+            elif response.status_code == 200:
+                self.auth_code = response.json()
+                params.pop('integration_type')
+                return params
+            logger.error(f'{self.auth_token} 获取auth_code失败')
+            return False
+        except Exception as e:
+            logger.error(e)
+            return False
+    def Discord_authorizeV2(self, client_id, state, redirect_uri,scope,integration_type='0',response_type='code'):
+        # 如果已经授权成功，直接返回 True，不再进行授权
+        if self.auth_success:
+            logger.info(f'{self.auth_token} 已成功授权，跳过重新授权')
+            return True
+        try:
+            params=self.get_auth_codeV2(client_id, state,redirect_uri,scope,integration_type,response_type)
+            if not params:
+                return False
+            json_data = {
+                'permissions': '0',
+                'authorize': True,
+                'integration_type': 0,
+                'location_context': {
+                    'guild_id': '10000',
+                    'channel_id': '10000',
+                    'channel_type': 10000,
+                },
+            }
+            response = self.Discord.post('https://discord.com/api/v9/oauth2/authorize', json=json_data,params=params)
+            if 'location' in response.text:
+                self.auth_success = True  # 授权成功，设置标志位
+                url=response.json().get('location')
+                response = self.Discord.get(url)
+                logger.success(f'{self.auth_token} Discord授权成功')
+                return True
+            elif response.status_code == 429:
+                time.sleep(5)
+                return self.Discord_authorizeV2(client_id, state,redirect_uri,scope,integration_type,response_type)
+            logger.error(f'{self.auth_token} Discord授权失败')
+            return False
+        except Exception as e:
+            logger.error(f'{self.auth_token} Discord授权异常：{e}')
+            return False
+def get(li:list,index:int=0):
+    if len(li)>index:
+        return li[index]
+    else:
+        return ""
+def generate_auth_string(user:str, token:str)->str:
+    auth_string = f"user={user}\1auth=Bearer {token}\1\1"
+    return auth_string
+
+def get_num_code(text:Any,num:int=6)->Union[None,str]:
+    code=re.findall(r'(\d{%s})'%num,str(text))
+    if code:
+        return code[0]
+    else:
+        return None
+
+def tuple_to_str(tuple_:tuple)->str:
+    """
+    元组转为字符串输出
+    :param tuple_: 转换前的元组，QQ邮箱格式为(b'\xcd\xf5\xd4\xc6', 'gbk')或者(b' <XXXX@163.com>', None)，163邮箱格式为('<XXXX@163.com>', None)
+    :return: 转换后的字符串
+    """
+    if tuple_[1]:
+        out_str = tuple_[0].decode(tuple_[1])
+    else:
+        if isinstance(tuple_[0], bytes):
+            out_str = tuple_[0].decode("gbk")
+        else:
+            out_str = tuple_[0]
+    return out_str
+class EmailOauth2Sync:
+    def __init__(
+        self,
+        email_address:str,
+        password:str,
+        imap_server:str='mailserver.0xfiang.com',
+        imap_port:int=143,
+        timeout:int=10
+    ) -> None:
+        self.email_address=email_address
+        self.password=password
+        self.imap_server=imap_server
+        self.imap_port=imap_port
+        self.timeout=timeout
+        self.login_imap4()
+    def login_imap4(self):
+        self.mail = imaplib.IMAP4(self.imap_server,self.imap_port,timeout=self.timeout)
+        self.mail.starttls()
+        self.mail.login(self.email_address, self.password)
+        logger.success('邮箱登陆成功')
+
+    def fetch_email_body(self, item):
+        status, msg_data = self.mail.fetch(item, "(RFC822)")
+        msg = email.message_from_bytes(msg_data[0][1])
+        # 解析邮件详细信息
+        subject, encoding = decode_header(msg["Subject"])[0]
+        if isinstance(subject, bytes):
+            # 如果主题是字节类型，则进行解码
+            subject = subject.decode(encoding if encoding else "utf-8")
+        from_ = msg.get("From")
+        date_ =  datetime.strptime(msg.get("Date").replace(" (UTC)", ""), '%a, %d %b %Y %H:%M:%S %z')
+        body = ""
+        # 处理邮件内容
+        if msg.is_multipart():
+            # 如果邮件是多部分的
+            for part in msg.walk():
+                # 获取邮件内容类型
+                content_type = part.get_content_type()
+                content_disposition = str(part.get("Content-Disposition"))
+
+                if (
+                    content_type == "text/plain"
+                    and "attachment" not in content_disposition
+                ):
+                    # 获取邮件正文
+                    try:
+                        body = part.get_payload(decode=True).decode("gbk")
+                    except:
+                        body = part.get_payload(decode=True).decode("utf8")
+        else:
+            # 如果邮件不是多部分的
+            try:
+                body = part.get_payload(decode=True).decode("gbk")
+            except:
+                body = part.get_payload(decode=True).decode("utf8")
+        
+        return {"from": from_, "subject": subject, "date": date_, "body": body,"item":item}
+    def getmail(self,select,method='ALL'):
+        assert method in ['ALL','UNSEEN'],"method not in ['ALL','UNSEEN']"
+        self.mail.select(select)
+        status, messages = self.mail.search(None, method) #UNSEEN 为未读邮件
+        all_emails = messages[0].split()
+        mails=[]
+        for item in all_emails:
+            mails.append(self.fetch_email_body(item))
+        return mails
+    def get_all_mail(self,method='ALL'):
+        return self.getmail('INBOX',method) +self.getmail('Junk',method)
+    #监听未读
+    def listening_unsee_mails(self,get_code=False,num=6):
+        count=100
+        while count>=0:
+            mails=list(sorted(self.get_all_mail('UNSEEN'),key=lambda x:x.get('date')))
+            
+            if mails:
+                mail=mails.pop()
+                # 设置已读
+                # self.mail.store(mail['item'], '+FLAGS', '\\Seen')
+                if get_code:
+                    code=get_num_code(mail['body'],num)
+                    return mail,code
+                return mail
+            logger.debug('未收到邮件，监听中...')
+            time.sleep(5)
+            count-=1
 def send_transaction(web3,transaction,private_key):
     signed_tx = web3.eth.account.sign_transaction(transaction,private_key)
     try:
         tx_hash = web3.eth.send_raw_transaction(signed_tx.raw_transaction)
     except Exception as e:
         tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
-    except Exception as e:
-        logger.error(e)
     return tx_hash
-
 def get_sign(web3,private_key, msg):
     # 账户信息
     # 使用web3.py编码消息
@@ -307,5 +803,5 @@ def is_24_hours_away(timestamp):
         return False
     
 if __name__ == "__main__":
-    timestramp=1739261163
-    print(is_24_hours_away(timestramp))
+    token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDAwMzg4MzEsImlhdCI6MTczOTk1MjQzMSwid2FsbGV0QWRkcmVzcyI6IjB4NzI2OTFhMzZFRDFmQUMzYjE5N0ZiNDI2MTJEYzE1YTg5NThiZjlmMiJ9.EblYl7VCbD6r55d8j6XmVwtHimore9YbKBZGOruAbhg'
+    print(check_jwt_exp(token))

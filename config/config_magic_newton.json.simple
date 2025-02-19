@@ -9,15 +9,14 @@
     "RETRY_COUNT":3,
     "rpc_url":"https://rpc-mainnet.taker.xyz/",
     "proxy":"http://xxx:xxx@xxx:xxx",
-    "chain_id":1125,
-    "account_path":"./data/account_taker.csv",
+    "chain_id":313313,
+    "account_path":"./data/magic_newton.csv",
     "invite_code":"邀请码",
     "max_worker":20,
     "headers":{
             "Accept": "application/json, text/plain, */*",
-            "Origin": "https://earn.taker.xyz",
-            "Pragma": "no-cache",
-            "Referer": "https://earn.taker.xyz/",
+            "origin": "https://www.magicnewton.com",
+            "priority": "u=1, i",
+            "referer": "https://www.magicnewton.com/portal"
     }
-
 }

@@ -1,5 +1,6 @@
 from core.bot.basebot import *
-class TakerBot(BaseBot):
+class MagicNewtonBot(BaseBot):
+    
     def get_user_info(self):
         response = self.session.get('https://lightmining-api.taker.xyz/user/getUserInfo')
         data=self._handle_response(response)

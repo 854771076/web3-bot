@@ -7,17 +7,17 @@
     "cf_api_method":"turnstile-min",
     "RETRY_INTERVAL":3,
     "RETRY_COUNT":3,
-    "rpc_url":"https://rpc-mainnet.taker.xyz/",
+    "rpc_url":"https://rpc.soneium.org",
+    "base_rpc_url":"https://mainnet.base.org",
     "proxy":"http://xxx:xxx@xxx:xxx",
-    "chain_id":1125,
-    "account_path":"./data/account_taker.csv",
+    "chain_id":1868,
     "invite_code":"邀请码",
+    "account_path":"./data/account_soneium.csv",
     "max_worker":20,
     "headers":{
             "Accept": "application/json, text/plain, */*",
-            "Origin": "https://earn.taker.xyz",
-            "Pragma": "no-cache",
-            "Referer": "https://earn.taker.xyz/",
+            "origin": "https://soneiumevent.unemeta.com",
+            "priority": "u=1, i",
+            "referer": "https://soneiumevent.unemeta.com"
     }
-
 }

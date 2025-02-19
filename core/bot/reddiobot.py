@@ -2,11 +2,6 @@ from core.bot.basebot import *
 
 
 class ReddioBot(BaseBot):
-    headers={
-        'Accept': 'application/json, text/plain, */*',
-        'origin': 'https://testnet-faucet.reddio.com',
-        'referer': 'https://testnet-faucet.reddio.com/',
-    }
     
     def transfer_task(self):
         other_account=self.config.get_random_accounts(self.account)[0]

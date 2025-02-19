@@ -11,6 +11,11 @@
     "proxy":"http://xxx:xxx@xxx:xxx",
     "chain_id":50341,
     "account_path":"./data/account_reddio.csv",
-    "max_worker":10
+    "max_worker":10,
+    "headers":{
+        "Accept": "application/json, text/plain, */*",
+        "origin": "https://testnet-faucet.reddio.com",
+        "referer": "https://testnet-faucet.reddio.com/",
+    }
 
 }

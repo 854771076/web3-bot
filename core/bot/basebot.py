@@ -11,10 +11,11 @@ class BaseBot():
             "http": config.proxy,
             "https": config.proxy,
         }
+        self.headers=config.headers
         self.web3 = web3
         self.RETRY_INTERVAL=config.RETRY_INTERVAL
         self.chain_id = config.chain_id
-        self.ua= UserAgent(platforms='desktop')
+        self.ua= UserAgent()
         self.session=Session(
             proxies=self.proxies,
             headers=self.headers,
