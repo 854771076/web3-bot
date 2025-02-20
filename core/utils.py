@@ -27,6 +27,8 @@ import re
 from email.header import decode_header
 from datetime import datetime
 import urllib
+import re,os
+from faker import Faker
 REQUESTS_PER_SECOND = 10
 ONE_SECOND = 1
 from web3 import Web3
@@ -801,7 +803,201 @@ def is_24_hours_away(timestamp):
         return True
     else:
         return False
-    
+class MailcowClient:
+    def __init__(self, api_url, api_key,defualt_pwd='123456',domain='mailserver.0xfiang.com',output_path='./'):
+        self.api_url = api_url
+        self.headers = {
+            "Content-Type": "application/json",
+            'X-Api-Key':api_key
+        }
+        self.fa = Faker()
+        self.defualt_pwd=defualt_pwd
+        self.domain=domain
+        self.session=requests.Session()
+        self.session.headers.update(self.headers)
+        self.domain_info=self.get_domain_info()
+        self.output_path=output_path
+        self.new_email_list=[]
+    def get_domain_info(self):
+        url = f"{self.api_url}/api/v1/get/domain/{self.domain}"
+        response = self.session.get(url, headers=self.headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to get mailbox info: {response.status_code}, {response.text}")
+    def add_mailbox(self, password=None):
+        assert self.domain_info['mboxes_left']>0,"邮箱数量已达上限"
+        url = f"{self.api_url}/api/v1/add/mailbox"
+        if not password:
+            password=self.defualt_pwd
+        index=self.domain_info['mboxes_in_domain']+1
+        name=f'{self.fa.first_name()}{index}'.lower()
+        data = {
+            'active': '1',
+            'domain': self.domain,
+            'local_part': name,
+            'name': name,
+            'password': password,
+            'password2': password,
+            'quota': '0',
+            'force_pw_update': 0,
+            'sogo_access': ['0', '1'],
+            'tls_enforce_in': '1',
+            'tls_enforce_out': '1',
+            'tags': [],
+            'rl_value': '',
+            'rl_frame': 's',
+            'quarantine_notification': 'hourly',
+            'quarantine_category': 'add_header',
+        }
+        response = self.session.post(url, json=data, headers=self.headers)
+        if response.status_code == 200:
+            self.domain_info['mboxes_in_domain']+=1
+            self.domain_info['mboxes_left']-=1
+            logger.debug(f"Mailbox {name}@{self.domain} added successfully.")
+            email={
+                'email':f'{name}@{self.domain}',
+                'password':password
+            }
+            self.new_email_list.append(email)
+            return email
+        else:
+            raise Exception(f"Failed to add mailbox: {response.status_code}, {response.text}")
+    def add_mailbox_many(self,count=10):
+        for i in range(count):
+            self.add_mailbox()
+    def save_email(self):
+        if self.new_email_list:
+            length=len(self.new_email_list)
+            df = pd.DataFrame(self.new_email_list)
+            file_path=os.path.join(self.output_path,f'new_mails_{length}_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.csv')
+            df.to_csv(file_path, index=False)
+            logger.success(f"已保存邮箱信息到:{file_path}")
+class SOGoTools:    
+    def __init__(self, username, password, base_url='https://mail.monsterbude.com'):
+        self.base_url = base_url
+        self.headers = {
+            'Accept': 'application/json, text/plain, */*',
+        }
+        self.username = username
+        self.password = password
+        self.session = requests.Session()
+        self.login()
+        self.put_xsrf_token()
+    def login(self):
+        json_data = {
+            'userName': self.username,
+            'password': self.password,
+            'domain': None,
+            'rememberLogin': 1,
+        }
+        response = self.session.post(f'{self.base_url}/SOGo/connect', headers=self.headers, json=json_data)
+        if response.status_code == 200:
+            logger.success(f"邮箱：{self.username}，登录成功")
+        else:
+            logger.error(f"邮箱：{self.username}，登录失败,{response.text}")
+    def put_xsrf_token(self):
+        XSRF_TOKEN=self.session.cookies.get_dict().get('XSRF-TOKEN')
+        self.session.headers.update({'X-XSRF-TOKEN':XSRF_TOKEN})
+    def query_msg(self,query:str=None)->list:
+        if query:
+            json_data = {
+                'sortingAttributes': {
+                    'sort': 'date',
+                    'asc': 0,
+                    'match': 'OR',
+                },
+                'filters': [
+                    {
+                        'searchBy': 'subject',
+                        'searchInput': query,
+                    },
+                    {
+                        'searchBy': 'from',
+                        'searchInput': query,
+                    },
+                ],
+            }
+        else:
+            json_data = {
+                'sortingAttributes': {
+                    'sort': 'date',
+                    'asc': 0
+                }
+            }
+        result=[]
+        response = self.session.post(f'{self.base_url}/SOGo/so/{self.username}/Mail/0/folderINBOX/view',  headers=self.headers, json=json_data)
+        if response.status_code == 200:
+            uids_INBOX=response.json().get('uids',[])
+        else:
+            uids_INBOX=[]
+        response = self.session.post(f'{self.base_url}/SOGo/so/{self.username}/Mail/0/folderJunk/view', headers=self.headers, json=json_data)
+        if response.status_code == 200:
+            uids_Junk=response.json().get('uids',[])
+        else:
+            uids_Junk=[]
+        for _id in uids_INBOX:
+            response = self.session.get(f'{self.base_url}/SOGo/so/{self.username}/Mail/0/folderINBOX/{_id}/view',  headers=self.headers)
+            result.append(response.json())
+        for _id in uids_Junk:
+            response = self.session.get(f'{self.base_url}/SOGo/so/{self.username}/Mail/0/folderJunk/{_id}/view',  headers=self.headers)
+            result.append(response.json())
+        if result:
+            return result
+        else:
+            logger.debug(f"邮箱：{self.username}，未找到：{query}")
+            return []
+    def convert_date(self,date_str):
+        # 中文星期和月份映射到英文
+        # 星期三对应Wednesday，九月对应September
+        # 创建一个中文到英文的映射字典
+        translations = {
+            '星期一': 'Monday',
+            '星期二': 'Tuesday',
+            '星期三': 'Wednesday',
+            '星期四': 'Thursday',
+            '星期五': 'Friday',
+            '星期六': 'Saturday',
+            '星期天': 'Sunday',
+            '一月': 'January',
+            '二月': 'February',
+            '三月': 'March',
+            '四月': 'April',
+            '五月': 'May',
+            '六月': 'June',
+            '七月': 'July',
+            '八月': 'August',
+            '九月': 'September',
+            '十月': 'October',
+            '十一月': 'November',
+            '十二月': 'December'
+        }
+
+        # 替换中文的星期和月份
+        for zh, en in translations.items():
+            date_str = date_str.replace(zh, en)
+        date_format = '%A, %B %d, %Y %H:%M'
+        # 解析日期时间字符串（忽略时区）
+        date_obj = datetime.strptime(date_str[:-4], date_format)
+        return date_obj
+    def get_num_code(self,data,num=4):
+        code=re.findall(f'(\d{num})',str(data))
+        if code:
+            return code[0]
+        else:
+            return data
+    def get_new_msg(self,query):
+        now=datetime.now()
+        count=0
+        while count<60:
+            data_list=self.query_msg(query)
+            for _ in data_list:
+                if self.convert_date(_['date'])>now:
+                    return _
+            time.sleep(3)
+            count+=1
+            logger.warning(f'邮箱：{self.username}，未收到新消息,重试中')
+        return None
 if __name__ == "__main__":
     token='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDAwMzg4MzEsImlhdCI6MTczOTk1MjQzMSwid2FsbGV0QWRkcmVzcyI6IjB4NzI2OTFhMzZFRDFmQUMzYjE5N0ZiNDI2MTJEYzE1YTg5NThiZjlmMiJ9.EblYl7VCbD6r55d8j6XmVwtHimore9YbKBZGOruAbhg'
     print(check_jwt_exp(token))
