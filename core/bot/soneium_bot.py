@@ -5,7 +5,7 @@ class SoneiumBot(BaseBot):
     def __init__(self,account,web3,config:Config):
         super().__init__(account,web3,config)
         self.web3_base = Web3(Web3.HTTPProvider(self.config.base_rpc_url,request_kwargs={"proxies": self.proxies}))
-        self.task=[4,6,0,1,2,3,5,]
+        self.task=[4,6,0,1,2,3,5]
     def do_task(self,task_id):
         assert self.account.get('registed'),"账户未注册"
         def complete_task(task_id):
@@ -27,7 +27,7 @@ class SoneiumBot(BaseBot):
                 logger.success(f"账户:{self.wallet.address},领取任务成功-{task_id}")
             else:
                 logger.warning(f"账户:{self.wallet.address},领取任务失败-{task_id}")
-        if not self.account.get(f'task_{task_id}'):
+        if not self.account.get(f'task_{task_id}') or task_id==6:
             try:
                 complete_task(task_id)
             except Exception as e:
@@ -36,7 +36,15 @@ class SoneiumBot(BaseBot):
                 claim_task(task_id)
             except Exception as e:
                 logger.warning(f"账户:{self.wallet.address},领取任务失败-{task_id},{e}")
-
+    def run_45_tx(self):
+        if self.account.get('45_tx'):
+            return
+        for i in range(45):
+            self.get_sign()
+            logger.info(f"账户:{self.wallet.address},发送交易-{i}")
+        logger.success(f"账户:{self.wallet.address},run_45_tx成功")
+        self.account['45_tx']=True
+        self.config.save_accounts()
     def do_all_task(self):
         for task_id in self.task:
             try:
@@ -48,7 +56,7 @@ class SoneiumBot(BaseBot):
     def bridge_eth(self):
         if  self.account.get('bridge'):
             return
-        def get_transaction(address,amount=0.0005):
+        def get_transaction(address,amount=0.000187):
             headers = {
                 'Accept': 'application/json, text/plain, */*',
                 'Origin': 'https://superbridge.app',
@@ -182,6 +190,7 @@ class SoneiumBotManager(BaseBotManager):
         bot=SoneiumBot(account,self.web3,self.config)
         try:
             bot.bridge_eth()
+            time.sleep(30)
         except Exception as e:
             logger.error(f"账户:{bot.wallet.address},桥接失败,{e}")
         try:
@@ -197,6 +206,10 @@ class SoneiumBotManager(BaseBotManager):
         except Exception as e:
             logger.error(f"账户:{bot.wallet.address},任务失败,{e}")
         bot.get_user_info()
+        try:
+            bot.run_45_tx()
+        except Exception as e:
+            logger.error(f"账户:{bot.wallet.address},run_45_tx失败,{e}")
     def run(self):
         with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
             futures = [executor.submit(self.run_single, account) for account in self.accounts]
