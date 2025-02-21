@@ -54,6 +54,48 @@ class SoneiumBot(BaseBot):
                 self.config.save_accounts()
             except Exception as e:
                 logger.warning(f"账户:{self.wallet.address},任务失败-{task_id},{e}")
+    def mini_nft1(self):
+        if self.account.get('mini_nft1'):
+            return
+        abi=json.loads('[{"inputs":[],"name":"mint","outputs":[],"stateMutability":"nopayable","type":"function"}]')
+        address='0x52d44Bea684eCd8Cad6d02205e40FC3bD59Ad877'
+        contract = self.web3.eth.contract(address=address, abi=abi)
+        tx = contract.functions.mint().build_transaction({
+            'from': self.wallet.address,
+            'gas': 200000,
+            'gasPrice': self.web3.eth.gas_price,
+            'nonce': self.web3.eth.get_transaction_count(self.wallet.address),
+
+        })
+        tx_hash=send_transaction(self.web3,tx,self.wallet.key)
+        receipt=self.web3.eth.wait_for_transaction_receipt(tx_hash)
+        if receipt.status==0:
+            logger.warning(f"账户:{self.wallet.address},mint失败,{receipt}")
+            return
+        logger.success(f"账户:{self.wallet.address},mint成功")
+        self.account['mini_nft1']=True
+        self.config.save_accounts()
+    def mini_nft2(self):
+        if self.account.get('mini_nft2'):
+            return
+        abi=json.loads('[{"inputs":[],"name":"mint","outputs":[],"stateMutability":"nopayable","type":"function"}]')
+        address='0xAF27443284F86CBdc1fa71941e8B787e5A4440De'
+        contract = self.web3.eth.contract(address=address, abi=abi)
+        tx = contract.functions.mint().build_transaction({
+            'from': self.wallet.address,
+            'gas': 200000,
+            'gasPrice': self.web3.eth.gas_price,
+            'nonce': self.web3.eth.get_transaction_count(self.wallet.address),
+
+        })
+        tx_hash=send_transaction(self.web3,tx,self.wallet.key)
+        receipt=self.web3.eth.wait_for_transaction_receipt(tx_hash)
+        if receipt.status==0:
+            logger.warning(f"账户:{self.wallet.address},mint失败,{receipt}")
+            return
+        logger.success(f"账户:{self.wallet.address},mint成功")
+        self.account['mini_nft2']=True
+        self.config.save_accounts()
     def bridge_eth(self):
         if  self.account.get('bridge'):
             return
@@ -211,6 +253,14 @@ class SoneiumBotManager(BaseBotManager):
             bot.run_45_tx()
         except Exception as e:
             logger.error(f"账户:{bot.wallet.address},run_45_tx失败,{e}")
+        try:
+            bot.mini_nft1()
+        except Exception as e:
+            logger.error(f"账户:{bot.wallet.address},mini_nft1失败,{e}")
+        try:
+            bot.mini_nft2()
+        except Exception as e:
+            logger.error(f"账户:{bot.wallet.address},mini_nft2失败,{e}")
     def run(self):
         with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
             futures = [executor.submit(self.run_single, account) for account in self.accounts]
