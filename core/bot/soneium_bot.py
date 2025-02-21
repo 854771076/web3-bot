@@ -5,7 +5,7 @@ class SoneiumBot(BaseBot):
     def __init__(self,account,web3,config:Config):
         super().__init__(account,web3,config)
         self.web3_base = Web3(Web3.HTTPProvider(self.config.base_rpc_url,request_kwargs={"proxies": self.proxies}))
-        self.task=[4,0,1,2,3,5]
+        self.task=[4,0,1,2,3,5,8,7,6]
         self.daily_task=[8,7,6]
     def do_task(self,task_id):
         assert self.account.get('registed'),"账户未注册"
@@ -159,22 +159,22 @@ class SoneiumBot(BaseBot):
                 logger.error(f"账户:{self.wallet.address},设置邀请码失败,{e}")
         token=self.account.get('token')
         
-        if token and check_jwt_exp(token):
-            logger.info(f"账户:{self.wallet.address},token复用")
+        # if token and check_jwt_exp(token):
+        #     logger.info(f"账户:{self.wallet.address},token复用")
+        # else:
+        if not self.account.get('registed'):
+            logger.warning(f"账户:{self.wallet.address},未注册,注册中...")
         else:
-            if not self.account.get('registed'):
-                logger.warning(f"账户:{self.wallet.address},未注册,注册中...")
-            else:
-                logger.warning(f"账户:{self.wallet.address},token失效,登录中...")
-            json_data = {
-            'wallet_address': self.wallet.address,
-            'okx_connect': True,
-            }
-            response = self.session.post('https://soneiumevent.unemeta.com/api/sonieum/v1/connect/wallet', json=json_data)
-            data=self._handle_response(response)
-            token=data.get('data',{}).get('token')                
-            self.account['token']=token
-            self.config.save_accounts()
+            logger.warning(f"账户:{self.wallet.address},token失效,登录中...")
+        json_data = {
+        'wallet_address': self.wallet.address,
+        'okx_connect': True,
+        }
+        response = self.session.post('https://soneiumevent.unemeta.com/api/sonieum/v1/connect/wallet', json=json_data)
+        data=self._handle_response(response)
+        token=data.get('data',{}).get('token')                
+        self.account['token']=token
+        self.config.save_accounts()
         self.session.headers.update({
             'Authorization': 'Bearer '+token
         })
