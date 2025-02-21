@@ -5,7 +5,8 @@ class SoneiumBot(BaseBot):
     def __init__(self,account,web3,config:Config):
         super().__init__(account,web3,config)
         self.web3_base = Web3(Web3.HTTPProvider(self.config.base_rpc_url,request_kwargs={"proxies": self.proxies}))
-        self.task=[4,6,0,1,2,3,5]
+        self.task=[4,0,1,2,3,5]
+        self.daily_task=[8,7,6]
     def do_task(self,task_id):
         assert self.account.get('registed'),"账户未注册"
         def complete_task(task_id):
@@ -27,7 +28,7 @@ class SoneiumBot(BaseBot):
                 logger.success(f"账户:{self.wallet.address},领取任务成功-{task_id}")
             else:
                 logger.warning(f"账户:{self.wallet.address},领取任务失败-{task_id}")
-        if not self.account.get(f'task_{task_id}') or task_id==6:
+        if not self.account.get(f'task_{task_id}') or task_id in self.daily_task:
             try:
                 complete_task(task_id)
             except Exception as e:
