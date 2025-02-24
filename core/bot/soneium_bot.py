@@ -6,7 +6,7 @@ class SoneiumBot(BaseBot):
         super().__init__(account,web3,config)
         self.web3_base = Web3(Web3.HTTPProvider(self.config.base_rpc_url,request_kwargs={"proxies": self.proxies}))
         self.task=[4,0,1,2,3,5,8,7,6]
-        self.daily_task=[8,7,6]
+        self.daily_task=[6]
     def do_task(self,task_id):
         assert self.account.get('registed'),"账户未注册"
         def complete_task(task_id):
@@ -17,17 +17,15 @@ class SoneiumBot(BaseBot):
             data=self._handle_response(response)
             logger.success(f"账户:{self.wallet.address},任务完成-{task_id}")
         def claim_task(task_id):
-            receipt=self.get_sign()
-            if receipt.status==1:
-                json_data = {
-                    'task_id': task_id,
-                    'nonce':self.web3.eth.get_transaction_count(self.wallet.address)
-                }
-                response = self.session.post('https://soneiumevent.unemeta.com/api/sonieum/v1/task/claim', json=json_data)
-                data=self._handle_response(response)
-                logger.success(f"账户:{self.wallet.address},领取任务成功-{task_id}")
-            else:
-                logger.warning(f"账户:{self.wallet.address},领取任务失败-{task_id}")
+            nonce=self.get_sign()
+            json_data = {
+                'task_id': task_id,
+                'nonce':nonce
+            }
+            response = self.session.post('https://soneiumevent.unemeta.com/api/sonieum/v1/task/claim', json=json_data)
+            data=self._handle_response(response)
+            logger.success(f"账户:{self.wallet.address},领取任务成功-{task_id}")
+           
         if not self.account.get(f'task_{task_id}') or task_id in self.daily_task:
             try:
                 complete_task(task_id)
@@ -146,6 +144,10 @@ class SoneiumBot(BaseBot):
         self.config.save_accounts()
         return userinfo
     def get_sign(self):
+        resp=self.session.get('https://soneiumevent.unemeta.com/api/sonieum/v1/nonce/max')
+        data=self._handle_response(resp)
+        max_nonce=data.get('data').get('nonce')
+
         address='0xbb4904e033Ef5Af3fc5d3D72888f1cAd7944784D'
         abi=json.loads('[{"inputs":[],"name":"Sign","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"_from","type":"address"},{"indexed":false,"internalType":"uint256","name":"_newValue","type":"uint256"}],"name":"SignEvent","type":"event"},{"inputs":[],"name":"getCurrentNonce","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"nonces","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}]')
         contract=self.web3.eth.contract(address=address,abi=abi)
@@ -158,30 +160,32 @@ class SoneiumBot(BaseBot):
         signed_txn = self.wallet.sign_transaction(tx)
         tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
         receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
-        return receipt
+        if receipt.status == 1:
+            logger.success(f"账户:{self.wallet.address},合约:{self.wallet.address},sign成功")
+        else:
+            logger.error(f"账户:{self.wallet.address},合约:{self.wallet.address},sign失败,原因:{receipt}")
+            
+        return max_nonce+1
     def checkin(self):
         assert self.account.get('registed'),"账户未注册"
-        def start_checkin():
+        def start_checkin(nonce):
             json_data = {
-                'nonce': self.web3.eth.get_transaction_count(self.wallet.address),
+                'nonce': nonce,
             }
             response = self.session.post('https://soneiumevent.unemeta.com/api/sonieum/v1/task/checkin', json=json_data)
             data=self._handle_response(response)
             msg=data.get('msg')
             logger.success(f"账户:{self.wallet.address},{msg},签到成功")
         def start_checkin_by_contract():
-            receipt=self.get_sign()
-            if receipt.status == 1:
-                logger.success(f"账户:{self.wallet.address},合约:{self.wallet.address},sign成功")
-                start_checkin()
-            else:
-                logger.error(f"账户:{self.wallet.address},合约:{self.wallet.address},sign失败,原因:{receipt}")
+            nonce=self.get_sign()
+            
+            start_checkin(nonce)
+            
         assert self.account.get('registed'),"账户未注册"
         self.get_user_info()
         can_checkin=self.task_info.get('can_checkin_task_today')
         if can_checkin:
             
-           
             start_checkin_by_contract()
         else:
             logger.warning(f"账户:{self.wallet.address},24小时内已签到")

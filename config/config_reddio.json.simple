@@ -12,10 +12,12 @@
     "chain_id":50341,
     "account_path":"./data/account_reddio.csv",
     "max_worker":10,
+    "invite_code":"邀请码",
     "headers":{
         "Accept": "application/json, text/plain, */*",
-        "origin": "https://testnet-faucet.reddio.com",
-        "referer": "https://testnet-faucet.reddio.com/",
+        "Origin": "https://points.reddio.com",
+        "Pragma": "no-cache",
+        "Referer": "https://points.reddio.com/"
     }
 
 }

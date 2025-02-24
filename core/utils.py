@@ -36,6 +36,56 @@ from web3.exceptions import ContractLogicError
 import requests
 from loguru import logger
 from eth_account.messages import encode_defunct
+def get_contract_transaction_gas_limit(web3,func,address):
+    '''
+    估算所需的 gas
+    '''
+    max_fee_cap = Web3.to_wei(100, 'ether')
+    gas_estimate = func.estimate_gas({
+    'from': address
+    })
+    # 获取当前 gas 价格
+    gas_price =web3.eth.gas_price
+    # 获取账户余额
+    balance = web3.eth.get_balance(address)
+    # 计算总费用
+    total_cost = gas_estimate * gas_price
+    # 判断 gas 或转账是否合理
+    if total_cost > balance:
+        ValueError('gas不足')
+    if total_cost > max_fee_cap:
+        # 如果超出上限，调整费用为 1 ETH
+        gas_estimate = max_fee_cap / gas_price
+        gas_estimate = int(gas_estimate)  # 将价格转换为整数
+    # 返回估算的 gas
+    return gas_estimate
+def deploy_contract(web3,account,compiled_contract, constructor_args=()):
+    """
+    部署智能合约
+    
+    :param compiled_contract: 编译后的合约对象（ABI 和 Bytecode）
+    :param constructor_args: 构造函数的参数
+    :return: 合约地址
+    """
+    
+    contract = web3.eth.contract(abi=compiled_contract['abi'], bytecode=compiled_contract['bytecode'])
+    tx = contract.constructor(*constructor_args).build_transaction({
+        'from': account.address,
+        'nonce': web3.eth.get_transaction_count(account.address),
+        'gas': 3000000,
+        'gasPrice': web3.eth.gas_price,
+    })
+
+    signed_tx = web3.eth.account.sign_transaction(tx, account.key)
+    tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
+    if tx_receipt.status == 1:
+        contract_address = tx_receipt.contractAddress
+        logger.info(f"合约已部署，地址: {contract_address}")
+        return contract_address
+    else:
+        logger.error(f"合约部署失败，交易哈希: {tx_receipt.transactionHash.hex()}")
+        return None
 class Web3Tool:
     def __init__(self, rpc_url='https://rpc.ankr.com/eth/xxx',chain_id=1,explorer=None):
         """
@@ -185,7 +235,7 @@ class Web3Tool:
                 pass
         return self.web3.to_hex(tx_hash)
     
-    def deploy_contract(self, compiled_contract, constructor_args=()):
+    def deploy_contract(self,account,compiled_contract, constructor_args=()):
         """
         部署智能合约
         
@@ -193,18 +243,16 @@ class Web3Tool:
         :param constructor_args: 构造函数的参数
         :return: 合约地址
         """
-        if not self.account:
-            raise ValueError("私钥未设置，无法部署合约")
         
         contract = self.web3.eth.contract(abi=compiled_contract['abi'], bytecode=compiled_contract['bytecode'])
         tx = contract.constructor(*constructor_args).build_transaction({
-            'from': self.account.address,
-            'nonce': self.web3.eth.get_transaction_count(self.account.address),
-            'gas': 3000000,
+            'from': account.address,
+            'nonce': self.web3.eth.get_transaction_count(account.address),
+            'gas': 30000000,
             'gasPrice': self.web3.eth.gas_price,
         })
 
-        signed_tx = self.web3.eth.account.sign_transaction(tx, self.private_key)
+        signed_tx = self.web3.eth.account.sign_transaction(tx, account.key)
         tx_hash = self.web3.eth.send_raw_transaction(signed_tx.rawTransaction)
         tx_receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
 
