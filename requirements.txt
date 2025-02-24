@@ -9,3 +9,4 @@ faker
 py-solc-x
 jwt
 curl_cffi
+urllib3==1.25.11
