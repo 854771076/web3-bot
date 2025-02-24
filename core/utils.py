@@ -59,7 +59,7 @@ def get_contract_transaction_gas_limit(web3,func,address):
         gas_estimate = int(gas_estimate)  # 将价格转换为整数
     # 返回估算的 gas
     return gas_estimate
-def deploy_contract(web3,account,compiled_contract, constructor_args=()):
+def deploy_contract(web3,account,compiled_contract, constructor_args=(),gas_rate=1):
     """
     部署智能合约
     
@@ -72,8 +72,8 @@ def deploy_contract(web3,account,compiled_contract, constructor_args=()):
     tx = contract.constructor(*constructor_args).build_transaction({
         'from': account.address,
         'nonce': web3.eth.get_transaction_count(account.address),
-        'gas': 3000000,
-        'gasPrice': web3.eth.gas_price,
+        'gas': 300000,
+        'gasPrice': web3.eth.gas_price*gas_rate,
     })
 
     signed_tx = web3.eth.account.sign_transaction(tx, account.key)
@@ -248,8 +248,8 @@ class Web3Tool:
         tx = contract.constructor(*constructor_args).build_transaction({
             'from': account.address,
             'nonce': self.web3.eth.get_transaction_count(account.address),
-            'gas': 30000000,
-            'gasPrice': self.web3.eth.gas_price,
+            'gas': 300000,
+            'gasPrice': self.web3.eth.gas_price*10,
         })
 
         signed_tx = self.web3.eth.account.sign_transaction(tx, account.key)

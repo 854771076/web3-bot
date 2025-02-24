@@ -3,6 +3,14 @@ from core.bot.basebot import *
 
 
 class ReddioBot(BaseBot):
+    daily_task_list={
+        'Faucet':'c2cf2c1d-cb46-406d-b025-dd6a00369214',
+        'transfer':'c2cf2c1d-cb46-406d-b025-dd6a00369215',
+        # 'Bridge':'c2cf2c1d-cb46-406d-b025-dd6a00369216'
+    }
+    once_task_list={
+       'deploy' :'c2cf2c1d-cb46-406d-b025-dd6a00369217'
+    }
     def _handle_response(self, response: Response, retry_func=None) -> None:
         """处理响应状态"""
         try:
@@ -56,19 +64,22 @@ class ReddioBot(BaseBot):
         connect_x()
         registe()
     def deploy(self):
+        if self.account.get('deployed'):
+            return True
         abi=[{'inputs': [], 'name': 'get', 'outputs': [{'internalType': 'uint256', 'name': '', 'type': 'uint256'}], 'stateMutability': 'view', 'type': 'function'}, {'inputs': [{'internalType': 'uint256', 'name': 'x', 'type': 'uint256'}], 'name': 'set', 'outputs': [], 'stateMutability': 'nonpayable', 'type': 'function'}, {'inputs': [], 'name': 'storedData', 'outputs': [{'internalType': 'uint256', 'name': '', 'type': 'uint256'}], 'stateMutability': 'view', 'type': 'function'}]
         bytecode='608060405234801561001057600080fd5b50610176806100206000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c80632a1afcd91461004657806360fe47b1146100645780636d4ce63c14610080575b600080fd5b61004e61009e565b60405161005b9190610104565b60405180910390f35b61007e600480360381019061007991906100cc565b6100a4565b005b6100886100ae565b6040516100959190610104565b60405180910390f35b60005481565b8060008190555050565b60008054905090565b6000813590506100c681610129565b92915050565b6000602082840312156100de57600080fd5b60006100ec848285016100b7565b91505092915050565b6100fe8161011f565b82525050565b600060208201905061011960008301846100f5565b92915050565b6000819050919050565b6101328161011f565b811461013d57600080fd5b5056fea26469706673582212200a619673ab087c57fedf007294664d469ba61b7441a0b5f17910cfeb09b98f7964736f6c63430008000033'
         compiled_contract={
             "abi":abi,
             "bytecode":bytecode
         }
-        deploy_contract(self.web3,self.account,compiled_contract)
-        
+        deploy_contract(self.web3,self.account,compiled_contract,100)
+        logger.info(f'第{self.index}个地址----{self.wallet.address}-部署合约成功')
+        self.account['deployed']=True
+        self.config.save_account(self.account)
     def transfer_task(self):
         other_account=self.config.get_random_accounts(self.account)[0]
         to_address = other_account.get('address')
         current_gas_price = self.web3.eth.gas_price
-        max_gas_price = self.web3.to_wei(3.5, 'gwei')
         # 可根据需求动态估算
         amount = round(random.uniform(0.001, 0.005), 5)
         logger.info(f"{self.wallet.address}----转账金额是{amount}, 接收地址----{to_address}")
@@ -79,7 +90,7 @@ class ReddioBot(BaseBot):
             'to': Web3.to_checksum_address(to_address) ,
             'chainId': self.config.chain_id,
             'gas': 21000,  # Gas 限制
-            'gasPrice': min(current_gas_price, max_gas_price),
+            'gasPrice':current_gas_price*100,
             'value': amount_wei,
         }
         try:
@@ -141,10 +152,33 @@ class ReddioBot(BaseBot):
                     f"第{self.index}个地址----{self.wallet.address}领水异常----重试第{j + 1}次中...{error}---{response.json()}")
         logger.error(f"第{self.index}个地址----{self.wallet.address}----领水失败")
         return None
+    def claim(self,task_uuid,daily=False):
+        if not daily:
+            if self.account.get(f'task_{task_uuid}'):
+                return True
+        json_data = {
+            'wallet_address': self.wallet.address,
+            'task_uuid': task_uuid,
+        }
+        response = self.session.post('https://points-mainnet.reddio.com/v1/points/verify',json=json_data)
+        data=self._handle_response(response)
+        logger.info(f'第{self.index}个地址----{self.wallet.address}-任务完成')
+        if not daily:
+            self.account[f'task_{task_uuid}']=True
+            self.config.save_account(self.account)
+    def claim_all(self):
+        for task_uuid in self.daily_task_list.values():
+            self.claim(task_uuid,True)
+        for task_uuid in self.once_task_list.values():
+            self.claim(task_uuid)
 
 class ReddioBotManager(BaseBotManager):
     def run_single(self,account):
         bot=ReddioBot(account,self.web3,self.config)
+        try:
+            bot.register()
+        except Exception as e:
+            logger.error(f"账户:{bot.wallet.address},注册失败,{e}")
         try:
             bot.faucet()
         except Exception as e:
@@ -154,7 +188,10 @@ class ReddioBotManager(BaseBotManager):
             bot.transfer_task()
         except Exception as e:
             logger.error(f"账户:{bot.wallet.address},转账失败,{e}")
-        
+        try:
+            bot.claim_all()
+        except Exception as e:
+            logger.error(f"账户:{bot.wallet.address},任务失败,{e}")
     def run(self):
         with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
             futures = [executor.submit(self.run_single, account) for account in self.accounts]
