@@ -39,6 +39,17 @@ from web3.exceptions import ContractLogicError
 import requests
 from loguru import logger
 from eth_account.messages import encode_defunct
+from datetime import datetime
+
+def get_string_from_time():
+    # 定义时间字符串的格式
+    time_format = "%Y-%m-%dT%H:%M:%S.%fZ"
+    dt=datetime.now()
+    # 将 datetime 对象格式化为字符串
+    time_str = dt.strftime(time_format)
+    
+    # 返回格式化后的字符串
+    return time_str
 def generate_random_erc20_contract():
     # 安装 Solidity 编译器
     install_solc('0.8.0')
