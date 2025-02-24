@@ -6,3 +6,4 @@ pandas
 requests
 apscheduler
 faker
+solcx

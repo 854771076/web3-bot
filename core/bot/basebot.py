@@ -43,7 +43,7 @@ class BaseBot():
             if retry_func:
                 return retry_func()
         except Exception as e:
-            raise Exception(f"请求过程中发生错误,{e}")
+            raise Exception(f"请求过程中发生错误,{e},{response.text}")
         
 class BaseBotManager():
     def __init__(self,config_path:str):

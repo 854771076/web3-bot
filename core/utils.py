@@ -31,11 +31,101 @@ import re,os
 from faker import Faker
 REQUESTS_PER_SECOND = 10
 ONE_SECOND = 1
+from solcx import compile_standard, install_solc
+import random
+import string
 from web3 import Web3
 from web3.exceptions import ContractLogicError
 import requests
 from loguru import logger
 from eth_account.messages import encode_defunct
+def generate_random_erc20_contract():
+    # 安装 Solidity 编译器
+    install_solc('0.8.0')
+
+    # 生成随机的代币名称和符号
+    token_name = ''.join(random.choices(string.ascii_uppercase, k=6))
+    token_symbol = ''.join(random.choices(string.ascii_uppercase, k=3))
+
+    # 生成随机的总供应量
+    total_supply = random.randint(1000000, 1000000000)
+
+    # 编写 ERC20 合约模板
+    contract_code = f"""
+    // SPDX-License-Identifier: MIT
+    pragma solidity ^0.8.0;
+
+    contract {token_name} {{
+        string public name = "{token_name}";
+        string public symbol = "{token_symbol}";
+        uint8 public decimals = 18;
+        uint256 public totalSupply;
+
+        mapping(address => uint256) public balanceOf;
+        mapping(address => mapping(address => uint256)) public allowance;
+
+        event Transfer(address indexed from, address indexed to, uint256 value);
+        event Approval(address indexed owner, address indexed spender, uint256 value);
+
+        constructor(uint256 _totalSupply) {{
+            totalSupply = _totalSupply * (10 ** uint256(decimals));
+            balanceOf[msg.sender] = totalSupply;
+            emit Transfer(address(0), msg.sender, totalSupply);
+        }}
+
+        function transfer(address _to, uint256 _value) public returns (bool success) {{
+            require(balanceOf[msg.sender] >= _value, "Insufficient balance");
+            balanceOf[msg.sender] -= _value;
+            balanceOf[_to] += _value;
+            emit Transfer(msg.sender, _to, _value);
+            return true;
+        }}
+
+        function approve(address _spender, uint256 _value) public returns (bool success) {{
+            allowance[msg.sender][_spender] = _value;
+            emit Approval(msg.sender, _spender, _value);
+            return true;
+        }}
+
+        function transferFrom(address _from, address _to, uint256 _value) public returns (bool success) {{
+            require(balanceOf[_from] >= _value, "Insufficient balance");
+            require(allowance[_from][msg.sender] >= _value, "Allowance exceeded");
+            balanceOf[_from] -= _value;
+            balanceOf[_to] += _value;
+            allowance[_from][msg.sender] -= _value;
+            emit Transfer(_from, _to, _value);
+            return true;
+        }}
+    }}
+    """
+
+    # 编译合约
+    compiled_sol = compile_standard(
+        {
+            "language": "Solidity",
+            "sources": {f"{token_name}.sol": {"content": contract_code}},
+            "settings": {
+                "outputSelection": {
+                    "*": {"*": ["abi", "evm.bytecode"]}
+                }
+            }
+        },
+        solc_version="0.8.0",
+    )
+
+    # 提取 ABI 和字节码
+    abi = compiled_sol["contracts"][f"{token_name}.sol"][token_name]["abi"]
+    bytecode = compiled_sol["contracts"][f"{token_name}.sol"][token_name]["evm"]["bytecode"]["object"]
+
+    # 返回编译信息
+    return {
+        "contract_code": contract_code,
+        "abi": abi,
+        "bytecode": bytecode,
+        "token_name": token_name,
+        "token_symbol": token_symbol,
+        "total_supply": total_supply
+    }
 def get_contract_transaction_gas_limit(web3,func,address):
     '''
     估算所需的 gas
@@ -59,6 +149,7 @@ def get_contract_transaction_gas_limit(web3,func,address):
         gas_estimate = int(gas_estimate)  # 将价格转换为整数
     # 返回估算的 gas
     return gas_estimate
+
 def deploy_contract(web3,account,compiled_contract, constructor_args=(),gas_rate=1):
     """
     部署智能合约
@@ -72,7 +163,7 @@ def deploy_contract(web3,account,compiled_contract, constructor_args=(),gas_rate
     tx = contract.constructor(*constructor_args).build_transaction({
         'from': account.address,
         'nonce': web3.eth.get_transaction_count(account.address),
-        'gas': 300000,
+        'gas': 3000000,
         'gasPrice': web3.eth.gas_price*gas_rate,
     })
 
