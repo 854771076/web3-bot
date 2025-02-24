@@ -1,6 +1,7 @@
 {
-    "site":"https://www.magicnewton.com/portal/rewards",
+    "site":"https://www.magicnewton.com/portal",
     "sitekey":"6LcGDIMqAAAAAH4O4-y9yAYaEAEJsCwsr8tC6VBJ",
+    "action":"signin",
     "cf_task":true,
     "cf_api_url":"http://127.0.0.1:3000/cf-clearance-scraper",
     "cf_api_key":null,

@@ -39,7 +39,7 @@ class MagicNewtonBot(BaseBot):
             nonce=get_nonce()
             time=get_string_from_time()
             msg=f'www.magicnewton.com wants you to sign in with your Ethereum account:\{self.wallet.address}\n\nPlease sign with your account\n\nURI: https://www.magicnewton.com\nVersion: 1\nChain ID: 1\nNonce: {nonce}\nIssued At: {time}'
-            token=get_cf_token(self.config.site,self.config.sitekey,method=self.config.cf_api_method,url=self.config.cf_api_url,authToken=self.config.cf_api_key)
+            token=get_cf_token(self.config.site,self.config.sitekey,method=self.config.cf_api_method,url=self.config.cf_api_url,authToken=self.config.cf_api_key,action=self.config.action)
             if not self.account.get('registed'):
                 logger.warning(f"账户:{self.wallet.address},未注册,注册中...")
                 data = {
@@ -47,8 +47,8 @@ class MagicNewtonBot(BaseBot):
                     'signature':  get_sign(self.web3,self.wallet.key, msg),
                     'redirect': 'false',
                     'recaptchaToken': token,
-                    'refCode': self.config.get_random_invite_code(),
-                    'botScore': '1',
+                    'refCode': self.config.invite_code,
+                    'botScore': '0',
                     'csrfToken': nonce,
                     'callbackUrl': 'https://www.magicnewton.com/portal',
                     'json': 'true',
@@ -61,7 +61,7 @@ class MagicNewtonBot(BaseBot):
                     'redirect': 'false',
                     'recaptchaToken': token,
                     'refCode': '',
-                    'botScore': '1',
+                    'botScore': '0',
                     'csrfToken': nonce,
                     'callbackUrl': 'https://www.magicnewton.com/portal',
                     'json': 'true',

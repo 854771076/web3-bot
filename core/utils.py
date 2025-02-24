@@ -178,8 +178,7 @@ def deploy_contract(web3,account,compiled_contract, constructor_args=(),gas_rate
         'gasPrice': web3.eth.gas_price*gas_rate,
     })
 
-    signed_tx = web3.eth.account.sign_transaction(tx, account.key)
-    tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    tx_hash = send_transaction(web3, tx,account.key)
     tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
     if tx_receipt.status == 1:
         contract_address = tx_receipt.contractAddress
@@ -883,20 +882,22 @@ class XAuth:
         return auth_code,redirect_uri
 @sleep_and_retry
 @limits(calls=REQUESTS_PER_SECOND, period=ONE_SECOND)
-def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000',authToken=None):
-    if authToken:
-        data = {
-            "url": site,
-            "siteKey": siteKey,
-            "mode": method,
-            "authToken": authToken
-        }
-    else:
-        data = {
+def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000',authToken=None,action=None):
+    data = {
             "url": site,
             "siteKey": siteKey,
             "mode": method
         }
+    if authToken:
+        data.update({
+            "authToken": authToken,
+        })
+
+    if action:
+        data.update({
+            "action": action
+        })
+        
     headers = {
         "Content-Type": "application/json"
     }
