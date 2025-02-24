@@ -1,9 +1,11 @@
 ratelimit
 loguru
-fake_useragent
+fake_useragent==1.5.1
 web3
 pandas
 requests
 apscheduler
 faker
 py-solc-x
+jwt
+curl_cffi
