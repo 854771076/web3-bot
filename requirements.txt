@@ -6,4 +6,4 @@ pandas
 requests
 apscheduler
 faker
-solcx
+py-solc-x
