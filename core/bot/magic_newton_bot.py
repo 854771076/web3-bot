@@ -66,8 +66,9 @@ class MagicNewtonBot(BaseBot):
                     'callbackUrl': 'https://www.magicnewton.com/portal',
                     'json': 'true',
                 }
-
-            response = self.session.post('https://www.magicnewton.com/portal/api/auth/callback/credentials', data=data)  
+            cookies={'__Host-next-auth.csrf-token': '6c849be943326cfe40066c4447e65a6dcd9ac34329866aa25506318923a53094%7Cdcb9ecc9fa9de5ee28bc62c200236a4659fa6c96171633a721e6bd47fcb4e0cc',
+    '__Secure-next-auth.callback-url': 'https%3A%2F%2Fportal.magicnewton.com',}
+            response = self.session.post('https://www.magicnewton.com/portal/api/auth/callback/credentials', data=data,cookies=cookies)  
             data=self._handle_response(response)
             token=self.session.cookies.get_dict().get('__Secure-next-auth.session-token')
             login_time=int(time.time())
