@@ -29,7 +29,15 @@ class MagicNewtonBot(BaseBot):
             data=self._handle_response(response)
             nonce=data.get('csrfToken')
             return nonce
-        
+        def get_session():
+            response=self.session.get('https://www.magicnewton.com/portal/api/auth/session')
+            self._handle_response(response)
+        def get_config():
+            response=self.session.get('https://auth.magic.link/api/magic-client/cGtfbGl2ZV9DMTgxOUQ1OUY1REZCOEUy/config')
+            data=self._handle_response(response)
+            return data
+        get_session()
+        get_config()
         token=self.account.get('token')
         login_time=self.account.get('login_time')
         
@@ -66,9 +74,9 @@ class MagicNewtonBot(BaseBot):
                     'callbackUrl': 'https://www.magicnewton.com/portal',
                     'json': 'true',
                 }
-            cookies={'__Host-next-auth.csrf-token': '6c849be943326cfe40066c4447e65a6dcd9ac34329866aa25506318923a53094%7Cdcb9ecc9fa9de5ee28bc62c200236a4659fa6c96171633a721e6bd47fcb4e0cc',
-    '__Secure-next-auth.callback-url': 'https%3A%2F%2Fportal.magicnewton.com',}
-            response = self.session.post('https://www.magicnewton.com/portal/api/auth/callback/credentials', data=data,cookies=cookies)  
+            response1=self.session.get('https://www.magicnewton.com/portal/api/auth/providers')
+            nonce=get_nonce()
+            response = self.session.post('https://www.magicnewton.com/portal/api/auth/callback/credentials', data=data)  
             data=self._handle_response(response)
             token=self.session.cookies.get_dict().get('__Secure-next-auth.session-token')
             login_time=int(time.time())
@@ -209,24 +217,6 @@ class MagicNewtonManager(BaseBotManager):
                     future.result()
                 except Exception as e:
                     logger.error(f"执行过程中发生错误: {e}")
-# curl 'https://www.magicnewton.com/portal/api/auth/callback/credentials' \
-#   -H 'accept: */*' \
-#   -H 'accept-language: zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6' \
-#   -H 'cache-control: no-cache' \
-#   -H 'content-type: application/x-www-form-urlencoded' \
-#   -b '_ga=GA1.1.1780817465.1740401003; __Host-next-auth.csrf-token=6c849be943326cfe40066c4447e65a6dcd9ac34329866aa25506318923a53094%7Cdcb9ecc9fa9de5ee28bc62c200236a4659fa6c96171633a721e6bd47fcb4e0cc; __Secure-next-auth.callback-url=https%3A%2F%2Fportal.magicnewton.com; wagmi.recentConnectorId="io.metamask"; _ga_2BFPMRZ2M3=GS1.1.1740401003.1.1.1740401071.0.0.0; wagmi.store={"state":{"connections":{"__type":"Map","value":[["ce25d1e6d39",{"accounts":["0x72691a36ED1fAC3b197Fb42612Dc15a8958bf9f2"],"chainId":1,"connector":{"id":"io.metamask","name":"MetaMask","type":"injected","uid":"ce25d1e6d39"}}]]},"chainId":1,"current":"ce25d1e6d39"},"version":2}' \
-#   -H 'origin: https://www.magicnewton.com' \
-#   -H 'pragma: no-cache' \
-#   -H 'priority: u=1, i' \
-#   -H 'referer: https://www.magicnewton.com/portal' \
-#   -H 'sec-ch-ua: "Not(A:Brand";v="99", "Microsoft Edge";v="133", "Chromium";v="133"' \
-#   -H 'sec-ch-ua-mobile: ?0' \
-#   -H 'sec-ch-ua-platform: "Windows"' \
-#   -H 'sec-fetch-dest: empty' \
-#   -H 'sec-fetch-mode: cors' \
-#   -H 'sec-fetch-site: same-origin' \
-#   -H 'user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0' \
-#   --data-raw 'message=www.magicnewton.com+wants+you+to+sign+in+with+your+Ethereum+account%3A%0A0x72691a36ED1fAC3b197Fb42612Dc15a8958bf9f2%0A%0APlease+sign+with+your+account%0A%0AURI%3A+https%3A%2F%2Fwww.magicnewton.com%0AVersion%3A+1%0AChain+ID%3A+1%0ANonce%3A+6c849be943326cfe40066c4447e65a6dcd9ac34329866aa25506318923a53094%0AIssued+At%3A+2025-02-24T12%3A44%3A46.486Z&signature=0x516b977e39710759128081327397a1f68bdb521f7cb3aeae585199aebbf41fa64c18a2829e46e447442612ae31a82f172ae148d5a615cba4185a8a1087be68941b&redirect=false&recaptchaToken=03AFcWeA7r_axdcXcjq9TB8SjsqeYK0eguo6dEb_tSmCiir6Q1luHMn9PPYlwEBuq-N8jU2GGnrXV0a148G0iosbuNAEqfbebpGcQlg8aQ3JCF8dXzVCN-LMvwaNE07Zt3CaFCBj-bCW5iM1V4nHbw_7GYhS-i06cVKBcUf_rGGX5g6SX82ehC7b79mNFJP2MkyQBdMjOKmx3pPmoxMOuh6egGv7eZA3zU44VxqM_gqTNnJGgCbx4OfD4_d_Si1f6l6OA97QkNrM1W_c9gctRUC0NnTWoy-dDCpxQshvUAdRnRExottpCF2GwTgBh5l2txqzOEAm2eTvML1Tp-AIfBrTGCP8HaCoK-IHLSFZ3G3xqc0GqCNJe2sFOKw4eULG31irqR34GzgVxdq6K8IYdTgUjKmJCtyBIVz1bsuMGoyQOjAzh4b9YvsA_7nt3gFy4mW-tqE7b1mCCX9WLQfYPavrY_Xkjl49P64gJUzLwQro3_HhstxDONgYIF0_JUewDYGf0EsOkvTf3Yj2RoWmHTgv94LYvIBM3hvrp8PR_CcVLcuEIX9vJZSv3pyTW7iC2jq7eR6a-wtZHb6P1VqIxcboxmmrMrzLwrVHqsBge7YjtMyUG2fyc1bLVfT6Pvfjxvc2_Ig9spVQQ6KM1kdndtaKfkl9QxixJzT6Wd2jhkHw8dR72WIU4ugCbYaaQ2aCiweD75TNPPtaZ9VyKqiaKk8zAnATY-bytMq83DUUuDkWZXyQEX5eP5Z0g65mDXXNtazJ2eghmdnEyLvurHO0qtQxgvKEJcPcGlbpeGWtI35rF3oqXOJRLSlP_Bn-q7c7Tkf_yyKVSdwANYKUXw6qDWWXC4D7OjOGqErPDH2DboTm1NyI26PX5Mgho0acxz4m-P3ObaMassOMiwnXTQHfIFz_XG_nauokPme9uhgHV4hAVJT86cetLjDZ5IIyMoGaeUpvEO3mJCxIVZh0-d1B7-Oadep6CVCZZfrXy-yuUBcq0CfSVGmZePWkPkXWLRms2j1cBcDj2VM12_nrxlesyzwPEarYuNnvQkma7eWqnuick9vwdb4wVfxsK7XBxJmu-0PJE5IVtNKzwnOE8d2ZGiZwpUFudFsDvh_lwPVtDYfkH9zvcKpSySVlXcgvmXm9Trvrs0kHER1-0xtac8Ci3YZOgTxXlNdd18OM5r4S_fbFhlDqbAk4zWD052ZazpWnS79PrzXypreYn0nij1dnYUxr_ITPycPYLVXoFYBKy4PG9-AtXCyvLoadEJ1Mu-0ohGhbLJZM6gtZxkxKwsrde5IXYYP9o05NIjg9sy6rq9xOTDBUEn49Vrz6C4hy94-jnTpjTugeRsCDlz0iS7WIcFtfLUszQ2kEkfDq9I9XwonRxz7WbkW-MKTHssxg4xybDsLFWgUcfjbzjZBEpGXWFDNcifReZWYzAbkuURVkcK0kqQDUyzGOVwv5YVgvQYn9OjQT5dWxi7NJ3X1TEGDVXi3sl5tM8p0xqx7MfNp6TR7JT8z43FeixxBKeQnOGoSfTpclWPYU4NccV3lGcAHEMs7zB0XozGopWNIqnO9X88hCNVbxsr52OncW-Ck1Po7k5zGdvGtCuN-IxroQZdSrhILPq8l5_ANR8HXFAJRV6utB7AI265h7zk2Y5CwLLRvQMqjM77VriXQSaixduZymasu5legNP3J2jN12rEbg1AKYv3O87j05gxzT1WjS7NbOxDT1-5QrQPjiYLZC85TsrfwcJuDWNSwu_UKjsm3wlnRCdA8tJyF8vADmkK_ZpDTcGp1UYBOdjrHFhBpSaOTvn7DcWd_uP4AlHuvO82T15f1AtRq1Aj-96RdzZOoJDLeIOOwvfEnXId-SwWUoq3EcrTSEqn2UCMHQH-RGQxniTmhXtsaMM4dqqm-bZLS__JgUhAl8fomQttSWPTiKPhwE1_0G_asB0GZBUornvZP2E6OI-MUOjfcvSutd2Nand-dPPqQb8dGHLayL5g7gG_2gb_GHB15_bQ8VTSObrfn2bTVBu1ZqfQJRNydS6dwUKZZLsxdL9wqh7JFRZ7nuXoxf91GT98z0m2DdE7YJv1t-vcxQOoTxlZkSGoGdW7mE0n_JMZdFZVyEgueItI2cuG8z9c-gUYNZOIJrW08L1Sq_k_UVDLa2UtXpsV0q15IfFgIOp2R7vjT1YsnaIEJHAQ3hTJJFmn6POsf4DRqB9x8a4n2gstM3lvBU40LkroF8_OPyW47yGt3HSr_8D0rftiHBuVckWBZJkcDxOqZg&refCode=&botScore=1&csrfToken=6c849be943326cfe40066c4447e65a6dcd9ac34329866aa25506318923a53094&callbackUrl=https%3A%2F%2Fwww.magicnewton.com%2Fportal&json=true'
 
 # curl 'https://www.magicnewton.com/portal/api/auth/csrf' \
 #   -H 'accept: */*' \
