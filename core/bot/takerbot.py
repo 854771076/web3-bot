@@ -86,7 +86,6 @@ class TakerBot(BaseBot):
         submit_connect_x(oauth_token)
     def mining(self):
         assert self.account.get('registed'),"账户未注册"
-        assert  self.account.get('bind_x'),"x未绑定"
         def get_last_mining_time():
             response = self.session.get('https://lightmining-api.taker.xyz/assignment/totalMiningTime')
             data=self._handle_response(response)
