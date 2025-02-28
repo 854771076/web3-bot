@@ -945,7 +945,7 @@ def get_cf_waf(site,siteKey,method="waf-session",url='http://127.0.0.1:3000',aut
     except Exception as e:
         logger.exception(f"请求过程中发生错误: {e}")
         return None
-def is_24_hours_away(timestamp):
+def is_any_hours_away(timestamp,hours=12):
     if not timestamp:
         return True
     current_time = time.time()
