@@ -144,7 +144,7 @@ class MonadBot(BaseBot):
         transaction={
             'from': self.main_wallet.address,
             'to': self.wallet.address,
-            'value': self.web3.to_wei(random.uniform(0.13,0.14),'ether'),
+            'value': self.web3.to_wei(random.uniform(0.15,0.155),'ether'),
             'gasPrice': self.web3.eth.gas_price, 
             'gas': 200000,
             'nonce': self.web3.eth.get_transaction_count(self.main_wallet.address),
