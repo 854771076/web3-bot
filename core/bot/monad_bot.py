@@ -1,5 +1,7 @@
 from core.bot.basebot import *
 from core.config import Config
+from threading import Lock
+lock=Lock()
 true=True
 false=False
 null=None
@@ -135,21 +137,23 @@ class MonadBot(BaseBot):
             else:
                 logger.error(f"账户:{self.wallet.address},transfer box 失败,原因:{receipt}")
     def transfer_eth(self):
+        
         # 从主地址转账随机余额（0.12-0.13）到钱包地址，如果余额大于等于0.12eth则跳过
         balance=self.web3.eth.get_balance(self.wallet.address)
         if balance>self.web3.to_wei(0.12,'ether'):
             logger.warning(f"账户:{self.wallet.address},余额足够,跳过")
             return
         logger.info(f"账户:{self.wallet.address},转账中...")
-        transaction={
-            'from': self.main_wallet.address,
-            'to': self.wallet.address,
-            'value': self.web3.to_wei(random.uniform(0.15,0.155),'ether'),
-            'gasPrice': self.web3.eth.gas_price, 
-            'gas': 200000,
-            'nonce': self.web3.eth.get_transaction_count(self.main_wallet.address),
-        } 
-        tx_hash = send_transaction(self.web3, transaction, self.main_wallet.key)
+        with lock:
+            transaction={
+                'from': self.main_wallet.address,
+                'to': self.wallet.address,
+                'value': self.web3.to_wei(random.uniform(0.15,0.155),'ether'),
+                'gasPrice': self.web3.eth.gas_price, 
+                'gas': 200000,
+                'nonce': self.web3.eth.get_transaction_count(self.main_wallet.address),
+            } 
+            tx_hash = send_transaction(self.web3, transaction, self.main_wallet.key)
         receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
         if receipt.status == 1:
             logger.success(f"账户:{self.wallet.address},转账成功")
