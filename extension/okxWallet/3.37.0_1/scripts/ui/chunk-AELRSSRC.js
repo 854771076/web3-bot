@@ -1,0 +1,7 @@
+import{na as a,oa as c}from"./chunk-NC7RXVWZ.js";import{m as o,o as r}from"./chunk-CS4SUKWE.js";o();r();c();var s={seedPhrase:"",privateKey:"",unlockHardwareWalletAccounts:{},chooseNetworkList:[],mpcInfo:{},isTonMnemonicImport:!1},n=a({name:"importAccount",initialState:s,reducers:{setSeedPhrase:(e,t)=>{e.seedPhrase=t.payload},setPrivateKey:(e,t)=>{e.privateKey=t.payload},setUnlockHardwareWallets:(e,t)=>{e.unlockHardwareWallets=t.payload},setMpcInfo:(e,t)=>{e.mpcInfo=t.payload},setChooseNetworkList:(e,t)=>{e.chooseNetworkList=t.payload||[]},setIsTonMnemonicImport:(e,t)=>{e.isTonMnemonicImport=t.payload},clearSeedPhrase:e=>{e.seedPhrase=""},clearPrivateKey:e=>{e.privateKey=""},clearUnlockHardwareWallets:e=>{e.unlockHardwareWallets={}},clearMpcInfo:e=>{e.mpcInfo={}}}}),{actions:l,reducer:i}=n,m=i,u=e=>e.importAccount.seedPhrase,I=e=>e.importAccount.privateKey,h=e=>e.importAccount.unlockHardwareWallets,k=e=>e.importAccount.mpcInfo,w=e=>e.importAccount.chooseNetworkList,y=e=>e.importAccount.isTonMnemonicImport,{setSeedPhrase:P,setPrivateKey:f,setUnlockHardwareWallets:M,setMpcInfo:v,clearSeedPhrase:H,clearPrivateKey:K,clearUnlockHardwareWallets:W,clearMpcInfo:A,setChooseNetworkList:S,setIsTonMnemonicImport:g}=l;export{m as a,u as b,I as c,h as d,k as e,w as f,y as g,P as h,f as i,M as j,v as k,H as l,K as m,W as n,A as o,S as p,g as q};
+
+window.inOKXExtension = true;
+window.inMiniApp = false;
+window.ASSETS_BUILD_TYPE = "publish";
+
+//# sourceMappingURL=chunk-AELRSSRC.js.map

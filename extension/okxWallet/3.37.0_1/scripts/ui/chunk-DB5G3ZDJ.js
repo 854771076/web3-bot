@@ -1,0 +1,7 @@
+import{a as l}from"./chunk-PO23PKFU.js";import{a as _}from"./chunk-FQEN5BEF.js";import{a as E}from"./chunk-F7IOPQEO.js";import{g as t}from"./chunk-PLHFXPVU.js";import{N as h,w as a}from"./chunk-4IQZG47E.js";import{H as w}from"./chunk-X62Q7VCJ.js";import{a as v}from"./chunk-WQYVBC56.js";import{f as n,m as i,o as e}from"./chunk-CS4SUKWE.js";i();e();var r={root:"_root_aln2y_1",passwordInput:"_passwordInput_aln2y_5",container:"_container_aln2y_11",title:"_title_aln2y_17",desc:"_desc_aln2y_25",link:"_link_aln2y_32",form:"_form_aln2y_36",inputError:"_inputError_aln2y_41",input:"_input_aln2y_41"};i();e();var o=n(v()),m=n(E()),p=n(w());h();function g({className:d,title:f,desc:u,children:y,onBack:s}){let c=l(),k=(0,m.useHistory)();return o.default.createElement("div",{className:(0,p.default)(r.root,d)},o.default.createElement(_,{bordered:!1,closeable:!1,onBack:()=>{s?s():k.goBack()}}),o.default.createElement("div",{className:r.container},o.default.createElement("h1",{className:r.title},f),o.default.createElement("div",{className:r.desc},u,o.default.createElement("div",null,o.default.createElement(t,{className:r.link,type:t.TYPE.primary,weight:t.WEIGHT.medium,size:t.SIZE.sm,href:c?.forgetPwd,target:"__blank",underline:!0},a("wallet_set_password_header_link_learn_more")))),y({formClass:r.form,formErrorClass:r.inputError,itemClass:r.input})))}var G=g;export{r as a,G as b};
+
+window.inOKXExtension = true;
+window.inMiniApp = false;
+window.ASSETS_BUILD_TYPE = "publish";
+
+//# sourceMappingURL=chunk-DB5G3ZDJ.js.map

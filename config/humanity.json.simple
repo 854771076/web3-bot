@@ -1,0 +1,8 @@
+{
+    "rpc_url":"rpc.testnet.humanity.org",
+    "proxy":"http://xxx:xxx@xxx:xxx",
+    "chain_id":1942999413,
+    "account_path":"./data/humanity.csv",
+    "invite_code":"xxx",
+    "max_worker":1
+}

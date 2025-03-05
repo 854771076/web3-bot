@@ -592,6 +592,103 @@ class EmailOauth2Sync:
     def __init__(
         self,
         email_address:str,
+        refresh_token:str,
+        id:str,
+        imap_server:str='outlook.live.com',
+        imap_port:int=143,
+        timeout:int=10
+    ) -> None:
+        self.email_address=email_address
+        self.refresh_token=refresh_token
+        self.id=id
+        self.imap_server=imap_server
+        self.imap_port=imap_port
+        self.timeout=timeout
+        self.login_imap4()
+    def login_imap4(self):
+        self.access_token=self.get_accesstoken(self.refresh_token)
+        self.mail = imaplib.IMAP4(self.imap_server,self.imap_port,timeout=self.timeout)
+        self.mail.starttls()
+        self.mail.authenticate('XOAUTH2', lambda x:generate_auth_string(self.email_address, self.access_token))
+        logger.success('邮箱登陆成功')
+    def get_accesstoken(self, refresh_token):
+        data = {
+            "client_id": "9e5f94bc-e8a4-4e73-b8be-63364c29d753",
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+        }
+        ret = requests.post(
+            "https://login.microsoftonline.com/consumers/oauth2/v2.0/token", data=data
+        )
+        assert ret.json().get("access_token"), "Token失效"
+        return ret.json().get("access_token")
+    def fetch_email_body(self, item):
+        status, msg_data = self.mail.fetch(item, "(RFC822)")
+        msg = email.message_from_bytes(msg_data[0][1])
+        # 解析邮件详细信息
+        subject, encoding = decode_header(msg["Subject"])[0]
+        if isinstance(subject, bytes):
+            # 如果主题是字节类型，则进行解码
+            subject = subject.decode(encoding if encoding else "utf-8")
+        from_ = msg.get("From")
+        date_ =  datetime.strptime(msg.get("Date"), '%a, %d %b %Y %H:%M:%S %z')
+        body = ""
+        # 处理邮件内容
+        if msg.is_multipart():
+            # 如果邮件是多部分的
+            for part in msg.walk():
+                # 获取邮件内容类型
+                content_type = part.get_content_type()
+                content_disposition = str(part.get("Content-Disposition"))
+
+                if (
+                    content_type == "text/plain"
+                    and "attachment" not in content_disposition
+                ):
+                    # 获取邮件正文
+                    body = part.get_payload(decode=True).decode()
+        else:
+            # 如果邮件不是多部分的
+            body = msg.get_payload(decode=True).decode()
+        
+        return {"from": from_, "subject": subject, "date": date_, "body": body,"item":item}
+    def getmail(self,select,method='ALL'):
+        assert method in ['ALL','UNSEEN'],"method not in ['ALL','UNSEEN']"
+        self.mail.select(select)
+        status, messages = self.mail.search(None, method) #UNSEEN 为未读邮件
+        all_emails = messages[0].split()
+        mails=[]
+        for item in all_emails:
+            mails.append(self.fetch_email_body(item))
+        return mails
+    def get_all_mail(self,method='ALL'):
+        return self.getmail('INBOX',method) +self.getmail('Junk',method)
+    #监听未读
+    def listening_unsee_mails(self,_from=None,get_code=False,num=6,tries=10):
+        while tries>0:
+            if _from:
+                mails=filter(lambda x:_from in x.get('from'),self.get_all_mail('UNSEEN'))
+            else:
+                mails=self.get_all_mail('UNSEEN')
+            mails=list(sorted(mails,key=lambda x:x.get('date')))
+            
+            if mails:
+                mail=mails.pop()
+                # 设置已读
+                self.mail.store(mail['item'], '+FLAGS', '\\Seen')
+                if get_code:
+                    code=get_num_code(mail['body'],num)
+                    logger.debug(f'收到邮件，内容为：{code}')
+                    return code
+                return [mail]
+            logger.debug('未收到邮件，监听中...')
+            time.sleep(5)
+            tries-=1
+        return False
+class EmailOauth2SyncByPassWord:
+    def __init__(
+        self,
+        email_address:str,
         password:str,
         imap_server:str='mailserver.0xfiang.com',
         imap_port:int=143,

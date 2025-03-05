@@ -1,0 +1,7 @@
+import{c as s,m as d,n as a,o as f}from"./chunk-CS4SUKWE.js";var l=s((u,c)=>{d();f();(function(t,o){"use strict";typeof c<"u"&&c.exports?c.exports=o():(t.nacl||(t.nacl={}),t.nacl.util=o())})(u,function(){"use strict";var t={};function o(e){if(!/^(?:[A-Za-z0-9+\/]{2}[A-Za-z0-9+\/]{2})*(?:[A-Za-z0-9+\/]{2}==|[A-Za-z0-9+\/]{3}=)?$/.test(e))throw new TypeError("invalid encoding")}return t.decodeUTF8=function(e){if(typeof e!="string")throw new TypeError("expected string");var n,r=unescape(encodeURIComponent(e)),i=new Uint8Array(r.length);for(n=0;n<r.length;n++)i[n]=r.charCodeAt(n);return i},t.encodeUTF8=function(e){var n,r=[];for(n=0;n<e.length;n++)r.push(String.fromCharCode(e[n]));return decodeURIComponent(escape(r.join("")))},typeof atob>"u"?typeof a.Buffer.from<"u"?(t.encodeBase64=function(e){return a.Buffer.from(e).toString("base64")},t.decodeBase64=function(e){return o(e),new Uint8Array(Array.prototype.slice.call(a.Buffer.from(e,"base64"),0))}):(t.encodeBase64=function(e){return new a.Buffer(e).toString("base64")},t.decodeBase64=function(e){return o(e),new Uint8Array(Array.prototype.slice.call(new a.Buffer(e,"base64"),0))}):(t.encodeBase64=function(e){var n,r=[],i=e.length;for(n=0;n<i;n++)r.push(String.fromCharCode(e[n]));return btoa(r.join(""))},t.decodeBase64=function(e){o(e);var n,r=atob(e),i=new Uint8Array(r.length);for(n=0;n<r.length;n++)i[n]=r.charCodeAt(n);return i}),t})});export{l as a};
+
+window.inOKXExtension = true;
+window.inMiniApp = false;
+window.ASSETS_BUILD_TYPE = "publish";
+
+//# sourceMappingURL=chunk-ADNFNM5R.js.map

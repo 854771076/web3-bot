@@ -1,0 +1,7 @@
+import{d as i,f as A}from"./chunk-DM24NLHH.js";import{c as a,d as y,e as p,g as d}from"./chunk-Z6Y7MSRE.js";import{l as W,o as u,pa as k}from"./chunk-5BQQ5BTM.js";import{m as w,o as f}from"./chunk-CS4SUKWE.js";w();f();k();A();var m={[p.addAccount]({hardware:e,account:r,baseChain:t,walletId:o}){return i().addHardwareWalletAccount(e,r,t,o)},[p.addChain]({account:e,baseChain:r,walletId:t}){return i().addChainForHardwareWallet(e,r,t)},others({hardware:e,account:r,baseChain:t}){return i().importHardwareWalletAccount(e,r,t)}},g={async[a.ledger](e){let{otherInfo:r}=e,{ledgerInfo:t}=r;e.hardwareWalletModel=t.productName||d[a.ledger]},[a.trezor](e){e.hardwareWalletModel=d[a.trezor]},[a.keystone](e){let{otherInfo:r}=e,{keystoneInfo:t}=r;e.hardwareWalletModel=t.device||d[a.keystone]},[a.onekey](e){let{otherInfo:r}=e,{onekeyInfo:t}=r,o=t?.deviceType?`${y[a.onekey]} ${W(t?.deviceType)}`:"";e.hardwareWalletModel=o||d[a.onekey]}},B=({accounts:e,hardware:r,baseChain:t,walletId:o,type:s,...M})=>async()=>{let l;for(let h=0;h<e.length;h++){let n=u(e[h]);n.otherInfo=M,await g[r](n),n.hardwareWalletType=d[r];let c=m[s];c||(l?.walletId?(s=p.addAccount,o=l.walletId,c=m[s]):c=m.others);let I=await c({hardware:r,account:n,baseChain:t,walletId:o});l??=I}return l};export{B as a};
+
+window.inOKXExtension = true;
+window.inMiniApp = false;
+window.ASSETS_BUILD_TYPE = "publish";
+
+//# sourceMappingURL=chunk-QYZYQAEQ.js.map

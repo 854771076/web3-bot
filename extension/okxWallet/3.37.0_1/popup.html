@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>OKX Wallet</title>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="./scripts/ui/ui.css"
+      title="ltr"
+    />
+  </head>
+
+  <body class="theme-light">
+    <div id="app" class="popup">
+      <div class="app-loading">
+        <img
+          class="loading__logo"
+          id="logo"
+          src="./static/images/logo-light.svg"
+          alt="okx"
+        />
+      </div>
+    </div>
+    <iframe id="sandbox" src="sandbox.html" style="display: none"></iframe>
+    <script src="./scripts/lib/globalthis.js" type="text/javascript"></script>
+    <script src="./scripts/vendor/theme.js" type="text/javascript"></script>
+    <script src="./scripts/vendor/React.js" type="text/javascript"></script>
+    <script src="./scripts/vendor/ReactDOM.js" type="text/javascript"></script>
+    <script
+      src="./scripts/vendor/ReactRouterDOM.js"
+      type="text/javascript"
+    ></script>
+    <script src="./scripts/ui/ui.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+import{b as j,c as s,d as O,g as F,m as n,o}from"./chunk-CS4SUKWE.js";var g=s((k,w)=>{n();o();w.exports=v;function v(r,e){if(r&&e)return v(r)(e);if(typeof r!="function")throw new TypeError("need wrapper function");return Object.keys(r).forEach(function(t){a[t]=r[t]}),a;function a(){for(var t=new Array(arguments.length),c=0;c<t.length;c++)t[c]=arguments[c];var i=r.apply(this,t),f=t[t.length-1];return typeof i=="function"&&i!==f&&Object.keys(f).forEach(function(h){i[h]=f[h]}),i}}});var q=s((z,d)=>{n();o();var b=g();d.exports=b(l);d.exports.strict=b(m);l.proto=l(function(){Object.defineProperty(Function.prototype,"once",{value:function(){return l(this)},configurable:!0}),Object.defineProperty(Function.prototype,"onceStrict",{value:function(){return m(this)},configurable:!0})});function l(r){var e=function(){return e.called?e.value:(e.called=!0,e.value=r.apply(this,arguments))};return e.called=!1,e}function m(r){var e=function(){if(e.called)throw new Error(e.onceError);return e.called=!0,e.value=r.apply(this,arguments)},a=r.name||"Function wrapped with `once`";return e.onceError=a+" shouldn't be called more than once",e.called=!1,e}});var x={};O(x,{default:()=>P});var P,E=j(()=>{n();o();P={}});var S=s((H,p)=>{n();o();var u=(E(),F(x));if(u&&u.default){p.exports=u.default;for(let r in u)p.exports[r]=u[r]}else u&&(p.exports=u)});export{g as a,q as b,S as c};
+
+window.inOKXExtension = true;
+window.inMiniApp = false;
+window.ASSETS_BUILD_TYPE = "publish";
+
+//# sourceMappingURL=chunk-D3KO3CPU.js.map

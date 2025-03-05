@@ -1,0 +1,7 @@
+import{a as _}from"./chunk-AWJSICVW.js";import{a as s}from"./chunk-AFBCVKXE.js";import{f as l}from"./chunk-3UTQU6PS.js";import{a as T}from"./chunk-ZQTA27XU.js";import{h as g,i as k}from"./chunk-YNP5EQNA.js";import{m as h}from"./chunk-NMBDO6HS.js";import{bc as j}from"./chunk-TYUTKD3A.js";import{La as e,Pa as Y}from"./chunk-NC7RXVWZ.js";import{Va as w,Xa as W}from"./chunk-QWQGBYOY.js";import{N as S,w as u}from"./chunk-4IQZG47E.js";import{a as H}from"./chunk-WQYVBC56.js";import{f,m as C,o as d}from"./chunk-CS4SUKWE.js";C();d();var y=f(H()),B=f(j());S();Y();W();var G=({unapproved:a,needCheckMpc:b,onConfirm:o,onConfirmReplace:I,onCancel:L,preExecInfo:O={}})=>{let t=(0,B.useDispatch)(),{id:n,walletId:i,chainEvents:P={}}=a,c=_(i),A=h(i),r=w(a.localType),E=(0,y.useCallback)(async()=>{c({trade:"sign",all_confirmation:"cancel",network:r,dapp_url:a.origin}),await t(g(n)),await e(t)},[c,t,n,r]),m=L||E,{loading:F,onClick:N}=s(m),D={btnText:u("wallet_dapp_connection_btn_reject"),actionType:l.ACTION_TYPE.CANCEL,onClick:N,loading:F},M=async()=>{try{if(b&&!await T({walletId:i,callback:m}))return;if(o&&I){await o();return}P?.beforeConfirm?.(),c({trade:"sign",all_confirmation:"confirm",network:r,dapp_url:a.origin}),await t(k(n)),await e(t),await o?.()}catch(p){console.log(p)}},{loading:R,onClick:q}=s(M),x={loading:R,onClick:q,disabled:A||O?.canConfirm===!1,actionType:l.ACTION_TYPE.CONFIRM};return[D,x]},tt=G;export{tt as a};
+
+window.inOKXExtension = true;
+window.inMiniApp = false;
+window.ASSETS_BUILD_TYPE = "publish";
+
+//# sourceMappingURL=chunk-UGUUG6ML.js.map

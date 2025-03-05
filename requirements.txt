@@ -10,3 +10,4 @@ py-solc-x
 jwt
 curl_cffi
 urllib3==1.25.11
+DrissionPage==4.1.0.17
