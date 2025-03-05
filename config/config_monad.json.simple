@@ -1,5 +1,5 @@
 {
-    "rpc_url":"testnet-rpc.monad.xyz",
+    "rpc_url":"https://testnet-rpc.monad.xyz",
     "proxy":"http://xxx:xxx@xxx:xxx",
     "chain_id":10143,
     "account_path":"./data/account_monad.csv",
