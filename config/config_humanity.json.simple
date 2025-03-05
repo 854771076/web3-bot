@@ -2,7 +2,9 @@
     "rpc_url":"rpc.testnet.humanity.org",
     "proxy":"http://xxx:xxx@xxx:xxx",
     "chain_id":1942999413,
-    "account_path":"./data/humanity.csv",
+    "account_path":"./data/account_humanity.csv",
     "invite_code":"xxx",
+    "RETRY_INTERVAL":3,
+    "RETRY_COUNT":3,
     "max_worker":1
 }

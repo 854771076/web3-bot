@@ -1,0 +1,25 @@
+{
+    "rpc_url":"testnet-rpc.monad.xyz",
+    "proxy":"http://xxx:xxx@xxx:xxx",
+    "chain_id":10143,
+    "account_path":"./data/account_monad.csv",
+    "mail_wallet_private_key":"xxx",
+    "invite_code":"8MWWQR",
+    "RETRY_INTERVAL":3,
+    "RETRY_COUNT":3,
+    "max_worker":1,
+    "headers":{
+    "accept": "*/*",
+    "accept-language": "zh-CN,zh;q=0.9",
+    "cache-control": "no-cache",
+    "origin": "https://monai.gg",
+    "pragma": "no-cache",
+    "priority": "u=1, i",
+    "referer": "https://monai.gg/",
+    "sec-ch-ua-mobile": "?0",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+    }
+}

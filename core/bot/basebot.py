@@ -27,7 +27,10 @@ class BaseBot():
         self.account=account
         self.config=config
         self.wallet:LocalAccount=self.web3.eth.account.from_key(self.account.get("private_key"))
-        self.index=self.config.accounts.index(account)
+        try:
+            self.index=self.config.accounts.index(account)
+        except:
+            self.index=0
     def _handle_response(self, response: requests.Response, retry_func=None) -> None:
         """处理响应状态"""
         try:
