@@ -73,7 +73,7 @@ class MonadBot(BaseBot):
                 'from': self.wallet.address,
                 'value': self.box_manager_contract.functions.BOX_PRICE().call(),
                 'gasPrice': self.web3.eth.gas_price,
-                'gas': 300000,
+                'gas': 350000,
                 'nonce': self.web3.eth.get_transaction_count(self.wallet.address),
             }
         )
@@ -95,7 +95,7 @@ class MonadBot(BaseBot):
             {
                 'from': self.wallet.address,
                 'gasPrice': self.web3.eth.gas_price,
-                'gas': 50000,
+                'gas': 200000,
                 'nonce': self.web3.eth.get_transaction_count(self.wallet.address),
 
             } 
@@ -159,7 +159,12 @@ class MonadBot(BaseBot):
 class MonadBotManager(BaseBotManager):
     def run_single(self,account):
         bot=MonadBot(account,self.web3,self.config)
-        bot.login()
+        bot.registe()
+        bot.transfer_eth()
+        time.sleep(5)
+        bot.mint_box()
+        time.sleep(5)
+        bot.transfer_box()
        
     def run(self):
         with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
