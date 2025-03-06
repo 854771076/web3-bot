@@ -30,7 +30,7 @@ def ckeck_alive(index,token):
             token['alive']=True
     logger.info(f'{index}-{token}')
 
-with ThreadPoolExecutor(max_workers=10) as executor:
+with ThreadPoolExecutor(max_workers=1) as executor:
     for index,token in enumerate(x_token_list):
         executor.submit(ckeck_alive,index,token)
     
