@@ -877,7 +877,7 @@ class XAuth:
             time.sleep(self.RETRY_INTERVAL)
             if retry_func:
                 return retry_func()
-            response.raise_for_status()
+        response.raise_for_status()
         
     def get_twitter_token(self, oauth_token: str) -> str:
         """获取Twitter认证token"""
