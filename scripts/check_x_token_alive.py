@@ -18,12 +18,14 @@ def ckeck_alive(index,token):
         x.get_auth_code({'test':1})
     except Exception as e:
         if 'Bad Token' in str(e):
+            logger.warning(f'已失效:{e}')
             token['alive']=False
         else:
             if 'ssl' in str(e).lower()():
                 logger.exception(f'VPN或网络异常:{e}')
                 return
             if '响应中未找到auth_code' in str(e):
+                logger.warning(f'响应中未找到auth_code:{e}')
                 token['alive']=False
             token['alive']=True
     logger.info(f'{index}-{token}')
