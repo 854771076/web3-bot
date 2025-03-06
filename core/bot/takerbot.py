@@ -28,7 +28,7 @@ class TakerBot(BaseBot):
                 json_data = {
                     'address': self.wallet.address,
                     'signature': get_sign(self.web3,self.wallet.key, nonce),
-                    "invitationCode":self.config.get_random_invite_code(),
+                    "invitationCode":self.config.invite_code,
                     'message': nonce,
                 }
             else:
@@ -75,7 +75,7 @@ class TakerBot(BaseBot):
             self.account['bind_x']=True
             self.config.save_accounts()
             logger.success(f"账户:{self.wallet.address},{msg},x绑定成功")
-        xauth=XAuth(self.account.get('x_token'))
+        xauth=XAuth(self.account.get('x_token'),proxies=self.proxies)
         try:
             oauth_token=xauth.oauth2(url)[0]
         except Exception as e:
