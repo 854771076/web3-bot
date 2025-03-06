@@ -20,7 +20,7 @@ def ckeck_alive(index,token):
         if 'Bad Token' in str(e):
             token['alive']=False
         else:
-            if 'ssl' in str(e):
+            if 'ssl' in str(e).lower()():
                 logger.exception(f'VPN或网络异常:{e}')
                 return
             if '响应中未找到auth_code' in str(e):
