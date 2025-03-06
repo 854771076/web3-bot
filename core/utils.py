@@ -884,7 +884,7 @@ class XAuth:
         if not oauth_token:
             raise ValueError("oauth_token不能为空")
         params = {"oauth_token": oauth_token}
-        response = self.session2.get("https://api.x.com/oauth/authenticate", params=params)
+        response = self.session2.get("https://api.x.com/oauth/authenticate", params=params,verify=False)
         self._handle_response(response)
         
         content = response.text
@@ -917,7 +917,7 @@ class XAuth:
             "oauth_token": oauth_token
         }
         
-        response = self.session2.post("https://x.com/oauth/authorize", data=data)
+        response = self.session2.post("https://x.com/oauth/authorize", data=data,verify=False)
         self._handle_response(response)
         
         content = response.text
@@ -938,7 +938,7 @@ class XAuth:
             raise ValueError("参数不能为空")
         def retry():
             return self.get_auth_code(params)
-        response = self.session.get(f"{self.TWITTER_API_BASE}/oauth2/authorize", params=params)
+        response = self.session.get(f"{self.TWITTER_API_BASE}/oauth2/authorize", params=params,verify=False)
         self._handle_response(response, retry)
         data = response.json()
         
@@ -971,7 +971,7 @@ class XAuth:
         
         def retry():
             return self.oauth2(params)
-        response = self.session.post(f"{self.TWITTER_API_BASE}/oauth2/authorize", data=data)
+        response = self.session.post(f"{self.TWITTER_API_BASE}/oauth2/authorize", data=data,verify=False)
         self._handle_response(response, retry)
         if  "redirect_uri" not in response.text:
             raise ValueError("响应中未找到redirect_uri")
