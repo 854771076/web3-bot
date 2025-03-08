@@ -613,7 +613,7 @@ class EmailOauth2Sync:
         logger.success('邮箱登陆成功')
     def get_accesstoken(self, refresh_token):
         data = {
-            "client_id": "9e5f94bc-e8a4-4e73-b8be-63364c29d753",
+            "client_id": self.id,
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
         }
@@ -701,9 +701,9 @@ class EmailOauth2SyncByPassWord:
         self.timeout=timeout
         self.login_imap4()
     def login_imap4(self):
-        self.mail = imaplib.IMAP4(self.imap_server,self.imap_port,timeout=self.timeout)
+        self.mail = imaplib.IMAP4(self.imap_server,self.imap_port)
         self.mail.starttls()
-        self.mail.login(self.email_address, self.password)
+        self.mail.login(str(self.email_address), str(self.password))
         logger.success('邮箱登陆成功')
 
     def fetch_email_body(self, item):
@@ -756,9 +756,10 @@ class EmailOauth2SyncByPassWord:
     #监听未读
     def listening_unsee_mails(self,get_code=False,num=6):
         count=100
-        while count>=0:
+        while count>=0:            
             mails=list(sorted(self.get_all_mail('UNSEEN'),key=lambda x:x.get('date')))
             
+
             if mails:
                 mail=mails.pop()
                 # 设置已读
@@ -1114,6 +1115,7 @@ class MailcowClient:
     def add_mailbox_many(self,count=10):
         for i in range(count):
             self.add_mailbox()
+        self.save_email()
     def save_email(self):
         if self.new_email_list:
             length=len(self.new_email_list)
@@ -1122,7 +1124,7 @@ class MailcowClient:
             df.to_csv(file_path, index=False)
             logger.success(f"已保存邮箱信息到:{file_path}")
 class SOGoTools:    
-    def __init__(self, username, password, base_url='https://mail.monsterbude.com'):
+    def __init__(self, username, password, base_url='https://mail.0xfiang.com'):
         self.base_url = base_url
         self.headers = {
             'Accept': 'application/json, text/plain, */*',
@@ -1234,7 +1236,7 @@ class SOGoTools:
             return code[0]
         else:
             return data
-    def get_new_msg(self,query):
+    def get_new_msg(self,query,code=False,num=6):
         now=datetime.now()
         count=0
         while count<60:

@@ -29,7 +29,7 @@ class MonadBot(BaseBot):
     def __init__(self, account, web3, config: Config):
         super().__init__(account, web3, config)
         self._init_contract()
-        self.main_wallet=self.web3.eth.account.from_key(self.config.mail_wallet_private_key)
+        self.main_wallet=self.web3.eth.account.from_key(self.config.main_wallet_private_key)
     def _handle_response(self, response, retry_func=None) -> None:
         """处理响应状态"""
         try:

@@ -34,7 +34,7 @@ def login_with_private_key(private_key,page_info):
     if yes_button:
         yes_button.click()
         time.sleep(2)
-        logger.info(f'私钥输入成功')
+        logger.debug(f'私钥输入成功')
 
     yes_button2= tab1.ele('@@data-testid=okd-button@@text():确认')
     if yes_button2:
@@ -66,7 +66,7 @@ def login_with_private_key(private_key,page_info):
     if yes_button3:
         yes_button3.click()
         time.sleep(random.random())
-        logger.info(f'设置钱包密码成功')
+        logger.debug(f'设置钱包密码成功')
 
     #选择导入evm网络
     evm_button = tab1.ele('@@tag():span@@text()：EVM 网络')
@@ -79,9 +79,9 @@ def login_with_private_key(private_key,page_info):
         yes_button3.click()
         time.sleep(random.random())
 
-    # button_final = tab1.ele('@@data-testid=okd-button@@text():开启你的 Web3 之旅')
-    # if button_final:
-    #     button_final.click()
+    button_final = tab1.ele('@@data-testid=okd-button@@text():开启你的 Web3 之旅')
+    if button_final:
+        button_final.click()
     logger.success(f'使用私钥登陆okx钱包成功')
     return True
 
@@ -107,14 +107,14 @@ def login_with_key_word(key_word,page_info):
         for i in range(1, 13):
             tab1.ele(f'xpath:/html/body/div/div/div[1]/div/div[2]/div/div[2]/div/div/form/div[1]/div[2]/div[{i}]/div[2]/input').input(str1[i - 1])
     except Exception as e:
-        print(f"注记词单词输入错误： {e}")
+        logger.exception(f"注记词单词输入错误： {e}")
 
     time.sleep(random.random())
     #助记词输入结束的确认按钮
     yes_button = tab1.ele('@@tag():button@@text():确认')
     if yes_button:
         yes_button.click()
-        logger.info(f'输入助记词单词成功')
+        # logger.debug(f'输入助记词单词成功')
         time.sleep(random.random())
 
     yes_button2= tab1.ele('@@data-testid=okd-button@@text():确认')
@@ -145,7 +145,7 @@ def login_with_key_word(key_word,page_info):
     if yes_button3:
         yes_button3.click()
         time.sleep(random.random())
-        logger.info(f'设置钱包密码成功')
+        logger.debug(f'设置钱包密码成功')
 
     #选择倒入钱包的网络
     evm_button = tab1.ele('@@tag():span@@text()：EVM 网络')

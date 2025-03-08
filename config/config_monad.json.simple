@@ -3,7 +3,7 @@
     "proxy":"http://xxx:xxx@xxx:xxx",
     "chain_id":10143,
     "account_path":"./data/account_monad.csv",
-    "mail_wallet_private_key":"xxx",
+    "main_wallet_private_key":"xxx",
     "invite_code":"8MWWQR",
     "RETRY_INTERVAL":3,
     "RETRY_COUNT":3,

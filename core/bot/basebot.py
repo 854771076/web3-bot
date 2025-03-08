@@ -5,13 +5,14 @@ class BaseBot():
     headers={
         'Accept': 'application/json, text/plain, */*',
     }
+    
     def __init__(self,account,web3,config:Config):
         self.account=account
         self.proxies = {
             "http": config.proxy,
             "https": config.proxy,
         }
-        self.headers=config.headers
+        self.headers=getattr(config,'headers',{})
         self.web3 = web3
         self.RETRY_INTERVAL=config.RETRY_INTERVAL
         self.chain_id = config.chain_id
@@ -25,7 +26,7 @@ class BaseBot():
         )
         self.session.headers.update({'User-Agent': self.ua.chrome})
         self.account=account
-        self.config=config
+        self.config:Config=config
         self.wallet:LocalAccount=self.web3.eth.account.from_key(self.account.get("private_key"))
         try:
             self.index=self.config.accounts.index(account)
@@ -52,11 +53,15 @@ class BaseBotManager():
     def __init__(self,config_path:str):
         self.config=Config(config_path)
         self.accounts=self.config.accounts
-        self.proxies = {
-            "http": self.config.proxy,
-            "https": self.config.proxy,
-        }
-        self.web3 = Web3(Web3.HTTPProvider(self.config.rpc_url,request_kwargs={"proxies": self.proxies}))
+        if self.config.proxy:
+            self.proxies = {
+                "http": self.config.proxy,
+                "https": self.config.proxy,
+            }
+            self.web3 = Web3(Web3.HTTPProvider(self.config.rpc_url,request_kwargs={"proxies": self.proxies}))
+        else:
+            self.web3 = Web3(Web3.HTTPProvider(self.config.rpc_url))
+            self.proxies =None
         if not self.web3.is_connected():
             logger.warning("无法连接到 RPC 节点,重试中...")
             time.sleep(self.config.RETRY_INTERVAL)

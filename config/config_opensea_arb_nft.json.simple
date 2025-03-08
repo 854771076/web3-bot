@@ -1,0 +1,10 @@
+{
+    "rpc_url":"https://arb1.arbitrum.io/rpc",
+    "proxy":"http://xxx:xxx@xxx:xxx",
+    "chain_id":42161,
+    "account_path":"./data/account_opensea_arb_nft.csv",
+    "main_wallet_private_key":"xxx",
+    "RETRY_INTERVAL":3,
+    "RETRY_COUNT":3,
+    "max_worker":1
+}

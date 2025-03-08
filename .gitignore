@@ -3,3 +3,5 @@ config/*.json
 data/*.csv
 __pycache__
 test.py
+my_script.py
+agent
