@@ -1,5 +1,8 @@
 ## Web3Bots
 
+#### 请我喝杯咖啡
+ETH 0x72691a36ed1fac3b197fb42612dc15a8958bf9f2
+
 #### 1.环境准备
 
 python>=3.8

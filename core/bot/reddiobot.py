@@ -247,7 +247,7 @@ class ReddioBotManager(BaseBotManager):
                 try:
                     future.result()
                 except Exception as e:
-                    logger.error(f"执行过程中发生错误: {e}")
+                    logger.exception(f"执行过程中发生错误: {e}")
     def run(self):
         with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
             futures = [executor.submit(self.run_single, account) for account in self.accounts]
@@ -255,5 +255,5 @@ class ReddioBotManager(BaseBotManager):
                 try:
                     future.result()
                 except Exception as e:
-                    logger.error(f"执行过程中发生错误: {e}")
+                    logger.exception(f"执行过程中发生错误: {e}")
 
