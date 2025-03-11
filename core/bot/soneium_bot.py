@@ -1,12 +1,45 @@
 from core.bot.basebot import *
-
+with open('contracts/SeaDrop.json','r') as f:
+    contract_json=json.load(f)
 class SoneiumBot(BaseBot):
+    def _init_contract(self):
+        self.nft_manager=self.web3.eth.contract(address=contract_json['address'],abi=contract_json['abi'])
     
     def __init__(self,account,web3,config:Config):
         super().__init__(account,web3,config)
         self.web3_base = Web3(Web3.HTTPProvider(self.config.base_rpc_url,request_kwargs={"proxies": self.proxies}))
         self.task=[4,0,1,2,3,5,8,7,6]
         self.daily_task=[6]
+        self._init_contract()
+    def mint_nft(self):
+        if self.account.get('mint'):
+            logger.warning(f"账户:{self.wallet.address},已经mint过,跳过")
+            return
+        balance=self.web3.eth.get_balance(self.wallet.address)
+        if balance==0:
+            logger.warning(f"账户:{self.wallet.address},余额不足,跳过")
+            return
+        logger.info(f"账户:{self.wallet.address},铸造中...")
+        func=self.nft_manager.functions.mintPublic(
+            '0x1e807EfC2416c6CD63cb3B01Dc91232D6F02d50A',
+            '0x0000a26b00c1F0DF003000390027140000fAa719',
+            '0x0000000000000000000000000000000000000000',
+            1000, 
+        )
+        tx=func.build_transaction({
+            'from':self.wallet.address,
+            'nonce':self.web3.eth.get_transaction_count(self.wallet.address),
+            'gasPrice':self.web3.eth.gas_price,
+        })
+        signed_txn = self.wallet.sign_transaction(tx)
+        tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+        receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+        if receipt.status == 1:
+            logger.success(f"账户:{self.wallet.address},mint成功")
+            self.account['mint']=True
+            self.config.save_accounts()
+        else:
+            logger.error(f"账户:{self.wallet.address},,mint失败,原因:{receipt}")
     def do_task(self,task_id):
         assert self.account.get('registed'),"账户未注册"
         def complete_task(task_id):
@@ -235,6 +268,10 @@ class SoneiumBot(BaseBot):
 class SoneiumBotManager(BaseBotManager):
     def run_single(self,account):
         bot=SoneiumBot(account,self.web3,self.config)
+        try:
+            bot.mint_nft()
+        except Exception as e:
+            logger.error(f"账户:{bot.wallet.address},mint失败,{e}")
         try:
             bot.bridge_eth()
             time.sleep(30)
