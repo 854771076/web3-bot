@@ -73,6 +73,7 @@ class MonadBot(BaseBot):
 
         response = session.post('https://testnet.monad.xyz/api/claim', headers=headers, json=json_data)
         logger.info(f"账户:{self.wallet.address},获取faucet,{response.text}")
+        time.sleep(3)
         if 'Success' in response.text:
             logger.success(f"账户:{self.wallet.address},获取faucet成功")
             self.account['faucet']=True
@@ -270,6 +271,6 @@ class MonadBotManager(BaseBotManager):
                 try:
                     future.result()
                 except Exception as e:
-                    logger.error(f"执行过程中发生错误: {e}")
+                    logger.exception(f"执行过程中发生错误: {e}")
 
     
