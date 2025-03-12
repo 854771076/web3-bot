@@ -52,7 +52,7 @@ class MonadBot(BaseBot):
     def get_faucet(self):
         """获取faucet"""
         if not is_any_hours_away(self.account.get('last_faucet_time'),12):
-            logger.warning(f"账户:{self.wallet.address},faucet,跳过")
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},faucet,跳过")
             return
         headers = {
             'accept': '*/*',
@@ -72,23 +72,36 @@ class MonadBot(BaseBot):
         }
 
         response = session.post('https://testnet.monad.xyz/api/claim', headers=headers, json=json_data)
-        logger.info(f"账户:{self.wallet.address},获取faucet,{response.text}")
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet,{response.text}")
         time.sleep(3)
         if 'Success' in response.text or 'Claimed' in response.text:
-            logger.success(f"账户:{self.wallet.address},获取faucet成功")
+            logger.success(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet成功")
             self.account['faucet']=True
             now=time.time()
             self.account['last_faucet_time']=now
             self.config.save_accounts()
         else:
-            logger.error(f"账户:{self.wallet.address},获取faucet失败,{response.text}")
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet失败,{response.text}")
             time.sleep(3)
             self.get_faucet()
-
+    def set_contract(self):
+        if self.account.get('contract_set'):
+            return
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},设置合约中...")
+        compiled_contract=generate_random_erc20_contract()
+        address=deploy_contract(self.web3,self.wallet,compiled_contract,(compiled_contract['total_supply'],),1,1000000)
+        if address:
+            logger.info(f'第{self.index}个地址,{self.wallet.address}-部署合约成功')
+            self.account['deployed']=True
+            self.config.save_accounts()
+            return True
+        else:
+            logger.error(f'第{self.index}个地址,{self.wallet.address}-部署合约失败')
+            return False
     def registe(self):
         if self.account.get('registed'):
             return
-        logger.info(f"账户:{self.wallet.address},注册中...")
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},注册中...")
         json_data = {
             'address': self.wallet.address,
             'refer_by': self.config.invite_code,
@@ -99,13 +112,13 @@ class MonadBot(BaseBot):
             self.account['registed']=True
             self.config.save_accounts()
         self.config.save_accounts()
-        logger.success(f"账户:{self.wallet.address},注册成功")
+        logger.success(f"账户:第{self.index}个地址,{self.wallet.address},注册成功")
     def mint_box(self):
         balance=self.web3.eth.get_balance(self.wallet.address)
         if balance<self.box_manager_contract.functions.BOX_PRICE().call():
-            logger.warning(f"账户:{self.wallet.address},余额不足,跳过")
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},余额不足,跳过")
             return
-        logger.info(f"账户:{self.wallet.address},铸造中...")
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},铸造中...")
         func=self.box_manager_contract.functions.mint(1,Web3.to_checksum_address(self.main_wallet.address))
         # gas=get_contract_transaction_gas_limit(self.web3, func, self.wallet.address)
         tx=func.build_transaction(
@@ -121,16 +134,16 @@ class MonadBot(BaseBot):
         tx_hash = self.web3.eth.send_raw_transaction(signed_txn.rawTransaction)
         receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
         if receipt.status == 1:
-            logger.success(f"账户:{self.wallet.address},mint成功")
+            logger.success(f"账户:第{self.index}个地址,{self.wallet.address},mint成功")
         else:
-            logger.error(f"账户:{self.wallet.address},,mint失败,原因:{receipt}")
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},,mint失败,原因:{receipt}")
     def transfer_MonAI(self) :
         # 通过self.MonAI_contract 查询数量
         MonAI_balance=self.MonAI_contract.functions.balanceOf(self.wallet.address).call()
         if MonAI_balance==0:
-            logger.warning(f"账户:{self.wallet.address},没有$MonAI,跳过")
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},没有$MonAI,跳过")
             return
-        logger.info(f"账户:{self.wallet.address},transfer中...")
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},transfer中...")
         transaction=self.MonAI_contract.functions.transfer(self.main_wallet.address,MonAI_balance).build_transaction(
             {
                 'from': self.wallet.address,
@@ -145,17 +158,17 @@ class MonadBot(BaseBot):
         receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
         
         if receipt.status == 1:
-            logger.success(f"账户:{self.wallet.address},transfer $MonAI 成功")
+            logger.success(f"账户:第{self.index}个地址,{self.wallet.address},transfer $MonAI 成功")
         else:
-            logger.error(f"账户:{self.wallet.address},transfer $MonAI 失败,原因:{receipt}")
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},transfer $MonAI 失败,原因:{receipt}")
     
     def transfer_box(self) :
         # 通过self.box_nft_contract 查询box数量
         box_count=self.box_nft_contract.functions.balanceOf(self.wallet.address).call()
         if box_count==0:
-            logger.warning(f"账户:{self.wallet.address},没有box,跳过")
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},没有box,跳过")
             return
-        logger.info(f"账户:{self.wallet.address},transfer中...")
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},transfer中...")
         for i in range(box_count):
             token_id=self.box_nft_contract.functions.tokenOfOwnerByIndex(self.wallet.address,i).call()
             func=self.box_nft_contract.functions.safeTransferFrom(self.wallet.address,self.main_wallet.address,token_id)
@@ -171,17 +184,17 @@ class MonadBot(BaseBot):
             tx_hash = send_transaction(self.web3, transaction, self.wallet.key)
             receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
             if receipt.status == 1:
-                logger.success(f"账户:{self.wallet.address},transfer box 成功")
+                logger.success(f"账户:第{self.index}个地址,{self.wallet.address},transfer box 成功")
             else:
-                logger.error(f"账户:{self.wallet.address},transfer box 失败,原因:{receipt}")
+                logger.error(f"账户:第{self.index}个地址,{self.wallet.address},transfer box 失败,原因:{receipt}")
     def transfer_eth(self):
         
         # 从主地址转账随机余额（0.12-0.13）到钱包地址，如果余额大于等于0.12eth则跳过
         balance=self.web3.eth.get_balance(self.wallet.address)
         if balance>self.web3.to_wei(0.12,'ether'):
-            logger.warning(f"账户:{self.wallet.address},余额足够,跳过")
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},余额足够,跳过")
             return
-        logger.info(f"账户:{self.wallet.address},转账中...")
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},转账中...")
         with lock:
             transaction={
                 'from': self.main_wallet.address,
@@ -194,9 +207,9 @@ class MonadBot(BaseBot):
             tx_hash = send_transaction(self.web3, transaction, self.main_wallet.key)
         receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
         if receipt.status == 1:
-            logger.success(f"账户:{self.wallet.address},转账成功")
+            logger.success(f"账户:第{self.index}个地址,{self.wallet.address},转账成功")
         else:
-            logger.error(f"账户:{self.wallet.address},转账失败,原因:{receipt}")
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},转账失败,原因:{receipt}")
     def transfer_eth_other(self):
 
         random_private_key=self.config.get_random_private_key()
@@ -204,12 +217,12 @@ class MonadBot(BaseBot):
         balance=self.web3.eth.get_balance(self.wallet.address)
         balance_human=float(self.web3.from_wei(balance,'ether'))
         if balance_human<0.01:
-            logger.warning(f"账户:{self.wallet.address},余额不足,跳过")
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},余额不足,跳过")
             return
         if not is_any_hours_away(self.account.get('last_transfer_time'),12):
-            logger.warning(f"账户:{self.wallet.address},12小时内已经转账,跳过")
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},12小时内已经转账,跳过")
             return
-        logger.info(f"账户:{self.wallet.address},随机转账中...")
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},随机转账中...")
         transaction={
             'from': self.wallet.address,
             'to': random_address,
@@ -221,15 +234,15 @@ class MonadBot(BaseBot):
         tx_hash = send_transaction(self.web3, transaction, self.wallet.key)
         receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
         if receipt.status == 1:
-            logger.success(f"账户:{self.wallet.address},转账成功")
+            logger.success(f"账户:第{self.index}个地址,{self.wallet.address},转账成功")
             now=time.time()
             self.account['last_transfer_time']=now
             self.config.save_accounts()
         else:
-            logger.error(f"账户:{self.wallet.address},转账失败,原因:{receipt}")
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},转账失败,原因:{receipt}")
     def checkin(self):
         if not is_any_hours_away(self.account.get('last_checkin_time'),12):
-            logger.warning(f"账户:{self.wallet.address},12小时内已经checkin,跳过")
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},12小时内已经checkin,跳过")
             return
         address='0xF33D3ff75a2fB1b6fF108b11F3a6F0Ad455d93F1'
         abi=[{'anonymous': False, 'inputs': [{'indexed': True, 'internalType': 'address', 'name': 'user', 'type': 'address'}, {'indexed': False, 'internalType': 'uint256', 'name': 'timestamp', 'type': 'uint256'}], 'name': 'CheckedIn', 'type': 'event'}, {'inputs': [], 'name': 'checkIn', 'outputs': [], 'stateMutability': 'nonpayable', 'type': 'function'}, {'inputs': [{'internalType': 'address', 'name': 'user', 'type': 'address'}], 'name': 'getCheckIns', 'outputs': [{'internalType': 'uint256[]', 'name': '', 'type': 'uint256[]'}], 'stateMutability': 'view', 'type': 'function'}]
@@ -251,13 +264,14 @@ class MonadBot(BaseBot):
             now=time.time()
             self.account['last_checkin_time']=now
             self.config.save_accounts()
-            logger.success(f"账户:{self.wallet.address},checkin成功")
+            logger.success(f"账户:第{self.index}个地址,{self.wallet.address},checkin成功")
         else:
-            logger.error(f"账户:{self.wallet.address},checkin失败,原因:{receipt}")
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},checkin失败,原因:{receipt}")
 class MonadBotManager(BaseBotManager):
     def run_single(self,account):
         bot=MonadBot(account,self.web3,self.config)
         bot.get_faucet()
+        bot.set_contract()
         bot.transfer_eth_other()
         bot.checkin()
         # bot.registe()
