@@ -8,9 +8,8 @@ if __name__ == '__main__':
     config_path='./config/config_monad.json'
     manager=MonadBotManager(config_path)
     manager.run()
-    # manager.run_single(manager.accounts[2])
 
     # 执行后每过24小时执行一次
-    # scheduler = BlockingScheduler()
-    # scheduler.add_job(manager.run, 'interval', hours=24) 
-    # scheduler.start()
+    scheduler = BlockingScheduler()
+    scheduler.add_job(manager.run, 'interval', hours=24) 
+    scheduler.start()
