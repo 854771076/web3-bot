@@ -74,13 +74,16 @@ class MonadBot(BaseBot):
         response = session.post('https://testnet.monad.xyz/api/claim', headers=headers, json=json_data)
         logger.info(f"账户:{self.wallet.address},获取faucet,{response.text}")
         time.sleep(3)
-        if 'Success' in response.text:
+        if 'Success' in response.text or 'Claimed' in response.text:
             logger.success(f"账户:{self.wallet.address},获取faucet成功")
             self.account['faucet']=True
             now=time.time()
             self.account['last_faucet_time']=now
             self.config.save_accounts()
-
+        else:
+            logger.error(f"账户:{self.wallet.address},获取faucet失败,{response.text}")
+            time.sleep(3)
+            self.get_faucet()
 
     def registe(self):
         if self.account.get('registed'):
