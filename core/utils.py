@@ -32,6 +32,7 @@ from faker import Faker
 REQUESTS_PER_SECOND = 10
 ONE_SECOND = 1
 from solcx import compile_standard, install_solc
+from solcx import compile_source
 import random
 import string
 from web3 import Web3
@@ -40,7 +41,55 @@ import requests
 from loguru import logger
 from eth_account.messages import encode_defunct
 from datetime import datetime
+def deploy_check_in_contract():
+    """
+    部署一个签到合约到以太坊网络
+    :param web3: 已配置的Web3对象
+    :return: 部署的合约实例
+    """
+    # 合约源代码
+    install_solc('0.8.0')
+    contract_source_code = """
+    pragma solidity ^0.8.0;
 
+    contract CheckInContract {
+        mapping(address => uint256[]) private _checkIns;
+        
+        event CheckedIn(address indexed user, uint256 timestamp);
+
+        function checkIn() public {
+            _checkIns[msg.sender].push(block.timestamp);
+            emit CheckedIn(msg.sender, block.timestamp);
+        }
+
+        function getCheckIns(address user) public view returns (uint256[] memory) {
+            return _checkIns[user];
+        }
+    }
+    """
+
+    compiled_sol = compile_standard(
+        {
+            "language": "Solidity",
+            "sources": {f"checkin.sol": {"content": contract_source_code}},
+            "settings": {
+                "outputSelection": {
+                    "*": {"*": ["abi", "evm.bytecode"]}
+                }
+            }
+        },
+        solc_version="0.8.0",
+    )
+    # return compiled_sol
+    # 提取 ABI 和字节码
+    abi = compiled_sol["contracts"][f"checkin.sol"]['CheckInContract']["abi"]
+    bytecode = compiled_sol["contracts"][f"checkin.sol"]['CheckInContract']["evm"]["bytecode"]["object"]
+
+    # 返回编译信息
+    return {
+        "abi": abi,
+        "bytecode": bytecode,
+    }
 def get_string_from_time():
     # 定义时间字符串的格式
     time_format = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -161,7 +210,7 @@ def get_contract_transaction_gas_limit(web3,func,address):
     # 返回估算的 gas
     return gas_estimate
 
-def deploy_contract(web3,account,compiled_contract, constructor_args=(),gas_rate=1):
+def deploy_contract(web3,account,compiled_contract, constructor_args=(),gas_rate=1,gas=100000):
     """
     部署智能合约
     
@@ -174,7 +223,7 @@ def deploy_contract(web3,account,compiled_contract, constructor_args=(),gas_rate
     tx = contract.constructor(*constructor_args).build_transaction({
         'from': account.address,
         'nonce': web3.eth.get_transaction_count(account.address),
-        'gas': 3000000,
+        'gas': gas,
         'gasPrice': web3.eth.gas_price*gas_rate,
     })
 

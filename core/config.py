@@ -38,3 +38,7 @@ class Config():
         if not choice_accounts:
             raise ValueError("没有可用的账户")
         return choice_accounts
+    def get_random_private_key(self):
+        private_key=random.choice(self.accounts).get('private_key')
+
+        return private_key

@@ -28,10 +28,23 @@ class BaseBot():
         self.account=account
         self.config:Config=config
         self.wallet:LocalAccount=self.web3.eth.account.from_key(self.account.get("private_key"))
+        if self.account.get('address')!=self.wallet.address or not self.account.get('address'):
+            self.account['address']=self.wallet.address
+            self.config.save_accounts()
         try:
             self.index=self.config.accounts.index(account)
         except:
             self.index=0
+    def get_new_session(self,headers):
+        session=Session(
+            proxies=self.proxies,
+            # headers=self.headers,
+            impersonate="safari17_2_ios",
+            verify=False,
+            timeout=600
+        )
+        session.headers.update({'User-Agent': self.ua.chrome})
+        return session
     def _handle_response(self, response: requests.Response, retry_func=None) -> None:
         """处理响应状态"""
         try:
