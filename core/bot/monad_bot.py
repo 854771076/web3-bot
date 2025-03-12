@@ -271,6 +271,6 @@ class MonadBotManager(BaseBotManager):
                 try:
                     future.result()
                 except Exception as e:
-                    logger.exception(f"执行过程中发生错误: {e}")
+                    logger.error(f"执行过程中发生错误: {e}")
 
     
