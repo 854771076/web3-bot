@@ -51,6 +51,9 @@ class MonadBot(BaseBot):
             raise Exception(f"请求过程中发生错误,{e},{response.text}")
     def get_faucet(self):
         """获取faucet"""
+        if not is_any_hours_away(self.account.get('last_faucet_time'),12):
+            logger.warning(f"账户:{self.wallet.address},faucet,跳过")
+            return
         headers = {
             'accept': '*/*',
             'accept-language': 'zh-CN,zh;q=0.9',
@@ -73,6 +76,8 @@ class MonadBot(BaseBot):
         if 'Success' in response.text:
             logger.success(f"账户:{self.wallet.address},获取faucet成功")
             self.account['faucet']=True
+            now=time.time()
+            self.account['last_faucet_time']=now
             self.config.save_accounts()
 
 
