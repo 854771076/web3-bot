@@ -1096,7 +1096,7 @@ def is_any_hours_away(timestamp,hours=12):
     if not timestamp:
         return True
     current_time = time.time()
-    time_difference =  current_time-int(timestamp)
+    time_difference =  current_time-float(timestamp)
     if time_difference >= 24 * 60 * 60:
         return True
     else:
