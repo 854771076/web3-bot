@@ -51,7 +51,7 @@ class MonadBot(BaseBot):
             raise Exception(f"请求过程中发生错误,{e},{response.text}")
     def get_faucet(self):
         """获取faucet"""
-        if not is_any_hours_away(self.account.get('last_faucet_time'),12):
+        if not is_any_hours_away(self.account.get('last_faucet_time'),5):
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},faucet,跳过")
             return
         headers = {
