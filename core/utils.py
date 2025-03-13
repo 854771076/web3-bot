@@ -1027,13 +1027,14 @@ class XAuth:
             raise ValueError("响应中未找到redirect_uri")
         redirect_uri=response.json().get("redirect_uri")
         return auth_code,redirect_uri
-@sleep_and_retry
-@limits(calls=REQUESTS_PER_SECOND, period=ONE_SECOND)
-def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000',authToken=None,action=None):
+# @sleep_and_retry
+# @limits(calls=REQUESTS_PER_SECOND, period=ONE_SECOND)
+def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000',authToken=None,action=None,maxSize=20):
     data = {
             "url": site,
             "siteKey": siteKey,
-            "mode": method
+            "mode": method,
+            "maxSize": maxSize
         }
     if authToken:
         data.update({
@@ -1044,7 +1045,7 @@ def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000'
         data.update({
             "action": action
         })
-        
+     
     headers = {
         "Content-Type": "application/json"
     }
