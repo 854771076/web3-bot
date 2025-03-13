@@ -1,6 +1,9 @@
 from core.bot.basebot import *
 from core.config import Config
 from threading import Lock
+import hashlib
+import hmac
+from urllib.parse import urlparse, urlencode
 lock=Lock()
 true=True
 false=False
@@ -14,6 +17,47 @@ nft721={
     'MonAIMysteryBox': "0x42f14e56afe10b122cdd3896d70b6be1e96b545e"
 }
 MonAI='0x7348fac1b35be27b0b636f0881afc9449ec54ba5'
+def c():
+    def inner(e, r):
+        key = r.encode('utf-8')
+        srcs = e.encode('utf-8')
+        encrypted = hmac.new(key, srcs, hashlib.sha256).hexdigest()
+        return encrypted
+    return inner
+
+def a():
+    def inner(e):
+        srcs = e.encode('utf-8')
+        encrypted = hashlib.md5(srcs).hexdigest()
+        return encrypted
+    return inner
+
+def get_signature(url, params=None):
+    result = {}
+    n = str(time.time())
+    parsed_url = urlparse(url)
+    o = parsed_url.path
+
+    if params:
+        filtered_params = {k: v for k, v in params.items() if v is not None}
+        if filtered_params:
+            query_string = urlencode(filtered_params)
+            o += f"?{query_string}"
+
+    result["X-API-Timestamp"] = n
+
+    hmac_func = c()
+    i = hmac_func(f"8063-{n}", "monad-secret")
+    s = ''.join([i[e] for e in range(1, len(i), 2)])
+    result["X-APP-ID"] = s
+
+    md5_func = a()
+    l = md5_func(o + s + str(n))
+    u = ''.join([l[e + 1] + l[e] for e in range(0, len(l), 2)])
+    result["X-API-Signature"] = u
+
+    return result
+ERC20_ABI=open('./contracts/ERC20.json').read()
 #实例化以上合约
 class MonadBot(BaseBot):
     def _init_contract(self):
@@ -33,6 +77,60 @@ class MonadBot(BaseBot):
             self.main_wallet=self.web3.eth.account.from_key(self.config.main_wallet_private_key)
         except:
             self.main_wallet=None
+    def get_token_info(self):
+        """获取token信息"""
+        url = 'https://monad-api.blockvision.org/testnet/api/account/tokenPortfolio'
+        params = {
+            'address': self.wallet.address,
+        }
+        headers=get_signature(url, params)
+        try:
+            response = self.session.get('https://monad-api.blockvision.org/testnet/api/account/tokenPortfolio', params=params, headers=headers)
+            data=response.json()
+        except Exception as e:
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},获取token信息失败,{e}")
+            return []
+        if data.get('message')=='OK':
+            self.tokens=response.json().get('result',{}).get('data')
+
+        else:
+            self.tokens=[]
+        return self.tokens
+    def transfer_token_other(self):
+
+        random_private_key=self.config.get_random_private_key()
+        random_address=self.web3.eth.account.from_key(random_private_key).address
+        tokens=[i for i in self.get_token_info() if i.get('contractAddress')!='0x0000000000000000000000000000000000000000']
+        tokens=sorted(tokens,key=lambda x:float(x.get('balance')),reverse=True)
+        if not tokens:
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},没有token,跳过")
+            return
+        token=tokens[0].get('contractAddress')
+        contract_ERC20=self.web3.eth.contract(address=Web3.to_checksum_address(token),abi=ERC20_ABI)
+        balance=contract_ERC20.functions.balanceOf(self.wallet.address).call()
+        send_balance=balance*random.uniform(0.01,0.05)
+        
+
+        if not is_any_hours_away(self.account.get('last_token_transfer_time'),12):
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},12小时内已经token转账,跳过")
+            return
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},随机token转账中...")
+        transaction=contract_ERC20.functions.transfer(random_address,int(send_balance)).build_transaction({
+            'from': self.wallet.address,
+            'nonce': self.web3.eth.get_transaction_count(self.wallet.address),
+            'gasPrice': self.web3.eth.gas_price,
+            'gas': 100000, 
+        })
+        
+        tx_hash = send_transaction(self.web3, transaction, self.wallet.key)
+        receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+        if receipt.status == 1:
+            logger.success(f"账户:第{self.index}个地址,{self.wallet.address},token转账成功")
+            now=time.time()
+            self.account['last_token_transfer_time']=now
+            self.config.save_accounts()
+        else:
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},token转账失败,原因:{receipt}")
     def _handle_response(self, response, retry_func=None) -> None:
         """处理响应状态"""
         try:
@@ -51,7 +149,7 @@ class MonadBot(BaseBot):
             raise Exception(f"请求过程中发生错误,{e},{response.text}")
     def get_faucet(self):
         """获取faucet"""
-        if not is_any_hours_away(self.account.get('last_faucet_time'),5):
+        if not is_any_hours_away(self.account.get('last_faucet_time'),12):
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},faucet,跳过")
             return
         headers = {
@@ -85,7 +183,7 @@ class MonadBot(BaseBot):
             time.sleep(3)
             self.get_faucet()
     def set_contract(self):
-        if self.account.get('contract_set'):
+        if self.account.get('deployed'):
             return
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},设置合约中...")
         compiled_contract=generate_random_erc20_contract()
@@ -98,6 +196,7 @@ class MonadBot(BaseBot):
         else:
             logger.error(f'第{self.index}个地址,{self.wallet.address}-部署合约失败')
             return False
+            
     def registe(self):
         if self.account.get('registed'):
             return
@@ -271,6 +370,10 @@ class MonadBotManager(BaseBotManager):
     def run_single(self,account):
         bot=MonadBot(account,self.web3,self.config)
         bot.get_faucet()
+        try:
+            bot.transfer_token_other()
+        except Exception as e:
+            logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},transfer_token_other失败,原因:{e}")
         bot.set_contract()
         bot.transfer_eth_other()
         bot.checkin()
