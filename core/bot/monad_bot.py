@@ -169,7 +169,7 @@ class MonadBot(BaseBot):
             'cloudFlareResponseToken': token,
         }
 
-        response = session.post('https://testnet.monad.xyz/api/claim', headers=headers, json=json_data)
+        response = session.post('https://faucet-claim.monadinfra.com/', headers=headers, json=json_data)
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet,{response.text}")
         time.sleep(3)
         if 'Success' in response.text or 'Claimed' in response.text:

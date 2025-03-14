@@ -133,8 +133,8 @@ class HumanityBot(BaseBot):
             co = ChromiumOptions()
             co.auto_port()
             #添加插件（path放路径）
-            co.add_extension(
-                path=r"extension/okxWallet/3.37.0_1")
+            # co.add_extension(
+            #     path=r"extension/okxWallet/3.37.0_1")
             co.add_extension(path=self.config.proxy_auth_plugin_path)
             # co.headless(True)
             co.set_user_agent(self.ua.chrome)
