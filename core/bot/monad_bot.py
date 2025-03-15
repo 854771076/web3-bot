@@ -318,7 +318,7 @@ class MonadBot(BaseBot):
         if balance_human<0.01:
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},余额不足,跳过")
             return
-        if not is_any_hours_away(self.account.get('last_transfer_time'),12):
+        if not is_any_hours_away(self.account.get('last_transfer_time'),24):
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},12小时内已经转账,跳过")
             return
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},随机转账中...")
@@ -340,7 +340,7 @@ class MonadBot(BaseBot):
         else:
             logger.error(f"账户:第{self.index}个地址,{self.wallet.address},转账失败,原因:{receipt}")
     def checkin(self):
-        if not is_any_hours_away(self.account.get('last_checkin_time'),12):
+        if not is_any_hours_away(self.account.get('last_checkin_time'),24):
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},12小时内已经checkin,跳过")
             return
         address='0xF33D3ff75a2fB1b6fF108b11F3a6F0Ad455d93F1'
