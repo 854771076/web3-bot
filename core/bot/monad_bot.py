@@ -173,7 +173,7 @@ class MonadBot(BaseBot):
         except Exception as e:
             logger.error(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet失败,{e}")
             time.sleep(3)
-            self.get_faucet()
+            return self.get_faucet()
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet,{response.text}")
         time.sleep(3)
         if 'Success' in response.text or 'Claimed' in response.text:
