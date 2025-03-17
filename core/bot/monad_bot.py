@@ -168,8 +168,12 @@ class MonadBot(BaseBot):
             'visitorId': visitorId,
             'cloudFlareResponseToken': token,
         }
-
-        response = session.post('https://faucet-claim.monadinfra.com/', headers=headers, json=json_data)
+        try:
+            response = session.post('https://faucet-claim.monadinfra.com/', headers=headers, json=json_data)
+        except Exception as e:
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet失败,{e}")
+            time.sleep(3)
+            self.get_faucet()
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet,{response.text}")
         time.sleep(3)
         if 'Success' in response.text or 'Claimed' in response.text:
@@ -309,10 +313,12 @@ class MonadBot(BaseBot):
             logger.success(f"账户:第{self.index}个地址,{self.wallet.address},转账成功")
         else:
             logger.error(f"账户:第{self.index}个地址,{self.wallet.address},转账失败,原因:{receipt}")
-    def transfer_eth_other(self):
-
-        random_private_key=self.config.get_random_private_key()
-        random_address=self.web3.eth.account.from_key(random_private_key).address
+    def transfer_eth_other(self,is_all=False,address=None):
+        if address:
+            random_address=address
+        else:
+            random_private_key=self.config.get_random_private_key()
+            random_address=self.web3.eth.account.from_key(random_private_key).address
         balance=self.web3.eth.get_balance(self.wallet.address)
         balance_human=float(self.web3.from_wei(balance,'ether'))
         if balance_human<0.01:
@@ -322,10 +328,16 @@ class MonadBot(BaseBot):
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},12小时内已经转账,跳过")
             return
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},随机转账中...")
+        if is_all:
+            send=balance_human-0.003
+        else:
+            send=random.uniform(balance_human*0.01,balance_human*0.05)
+        if send>1:
+            send=1
         transaction={
             'from': self.wallet.address,
-            'to': random_address,
-            'value': self.web3.to_wei(random.uniform(balance_human*0.01,balance_human*0.05),'ether'),
+            'to': Web3.to_checksum_address(random_address),
+            'value': self.web3.to_wei(send,'ether'),
             'gasPrice': self.web3.eth.gas_price, 
             'gas': 50000,
             'nonce': self.web3.eth.get_transaction_count(self.wallet.address),
@@ -383,6 +395,21 @@ class MonadBotManager(BaseBotManager):
         # bot.mint_box()
         # time.sleep(5)
         # bot.transfer_box()
+       
+    def run(self):
+        with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
+            futures = [executor.submit(self.run_single, account) for account in self.accounts]
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    logger.error(f"执行过程中发生错误: {e}")
+
+class MonadBotManager2(BaseBotManager):
+    def run_single(self,account):
+        bot=MonadBot(account,self.web3,self.config)
+        bot.get_faucet()
+        bot.transfer_eth_other(is_all=True,address='0x1e5f36cc94e30d31ea1f5a235aca673558edc574')
        
     def run(self):
         with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
