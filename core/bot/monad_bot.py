@@ -47,7 +47,7 @@ def get_signature(url, params=None):
     result["X-API-Timestamp"] = n
 
     hmac_func = c()
-    i = hmac_func(f"8063-{n}", "monad-secret")
+    i = hmac_func(f"8567-{n}", "monad-secret")
     s = ''.join([i[e] for e in range(1, len(i), 2)])
     result["X-APP-ID"] = s
 
@@ -95,6 +95,7 @@ class MonadBot(BaseBot):
 
         else:
             self.tokens=[]
+            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},获取token信息失败,{data.get('message')}")
         return self.tokens
     def transfer_token_other(self):
 
@@ -347,7 +348,7 @@ class MonadBot(BaseBot):
         if balance_human<0.01:
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},余额不足,跳过")
             return
-        if not is_any_hours_away(self.account.get('last_transfer_time'),24):
+        if not is_any_hours_away(self.account.get('last_transfer_time'),12):
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},12小时内已经转账,跳过")
             return
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},随机转账中...")
@@ -375,7 +376,7 @@ class MonadBot(BaseBot):
         else:
             logger.error(f"账户:第{self.index}个地址,{self.wallet.address},转账失败,原因:{receipt}")
     def checkin(self):
-        if not is_any_hours_away(self.account.get('last_checkin_time'),24):
+        if not is_any_hours_away(self.account.get('last_checkin_time'),12):
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},12小时内已经checkin,跳过")
             return
         address='0xF33D3ff75a2fB1b6fF108b11F3a6F0Ad455d93F1'
