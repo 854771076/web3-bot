@@ -147,6 +147,24 @@ class MonadBot(BaseBot):
                 return retry_func()
         except Exception as e:
             raise Exception(f"请求过程中发生错误,{e},{response.text}")
+    def get_verification_token(self):
+        headers = {
+        'user-agent':self.ua.chrome,
+        }
+        response = curl_cffi_requests.get('https://testnet.monad.xyz/', headers=headers,impersonate='chrome')
+        text=re.sub('\s','',response.text).replace('\\','')
+        requestVerification=re.findall('requestVerification":(\\{.*?\\})',text)
+        try:
+            if requestVerification:
+                data=json.loads(requestVerification[0])
+                return {
+                    'X-Request-Timestamp':data['timestamp'],
+                    'X-Request-Verification-Token':data['token'],
+                }
+            else:
+                return None
+        except Exception as e:
+            logger.error(e)
     def get_faucet(self):
         """获取faucet"""
         if not is_any_hours_away(self.account.get('last_faucet_time'),12):
@@ -160,6 +178,11 @@ class MonadBot(BaseBot):
             'priority': 'u=1, i',
             'referer': 'https://testnet.monad.xyz/',
         }
+        requestVerification=self.get_verification_token()
+        if requestVerification:
+            headers.update(requestVerification)
+        else:
+            return self.get_faucet()
         session=self.get_new_session(headers)
         visitorId=''.join(random.choices(string.ascii_uppercase + string.digits, k=32))
         token=get_cf_token(self.config.site,self.config.sitekey,method=self.config.cf_api_method,url=self.config.cf_api_url,authToken=self.config.cf_api_key)

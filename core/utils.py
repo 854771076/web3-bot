@@ -16,6 +16,7 @@ from eth_account.signers.local import LocalAccount
 import jwt
 from apscheduler.schedulers.blocking import BlockingScheduler
 from curl_cffi.requests import Session
+from curl_cffi import requests as curl_cffi_requests
 import json
 import hashlib
 import random
