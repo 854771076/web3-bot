@@ -189,7 +189,7 @@ class HumanityBot(BaseBot):
         })
         transaction = contract.functions.claimReward().build_transaction({
             'chainId': self.web3.eth.chain_id,
-            'from': self.sender_address,
+            'from': self.wallet.address,
             'gas': gas_amount,
             'gasPrice': self.web3.eth.gas_price,
             'nonce': self.web3.eth.get_transaction_count(self.wallet.address)
@@ -242,7 +242,7 @@ class HumanityBot(BaseBot):
 class HumanityManager(BaseBotManager):
     def run_single(self,account):
        bot=HumanityBot(account,self.web3,self.config)
-       bot.register_work()
+    #    bot.register_work()
        bot.get_faucet()
        time.sleep(10)
        bot.checkin()
