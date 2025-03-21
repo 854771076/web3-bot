@@ -148,11 +148,8 @@ class MonadBot(BaseBot):
                 return retry_func()
         except Exception as e:
             raise Exception(f"请求过程中发生错误,{e},{response.text}")
-    def get_verification_token(self):
-        headers = {
-        'user-agent':self.ua.chrome,
-        }
-        response = curl_cffi_requests.get('https://testnet.monad.xyz/', headers=headers,impersonate='chrome')
+    def get_verification_token(self,session):
+        response = session.get('https://testnet.monad.xyz/')
         text=re.sub('\s','',response.text).replace('\\','')
         requestVerification=re.findall('requestVerification":(\\{.*?\\})',text)
         try:
@@ -179,12 +176,13 @@ class MonadBot(BaseBot):
             'priority': 'u=1, i',
             'referer': 'https://testnet.monad.xyz/',
         }
-        requestVerification=self.get_verification_token()
+        session=self.get_new_session(headers)
+        requestVerification=self.get_verification_token(session)
         if requestVerification:
             headers.update(requestVerification)
         else:
             return self.get_faucet()
-        session=self.get_new_session(headers)
+        
         visitorId=''.join(random.choices(string.ascii_uppercase + string.digits, k=32))
         token=get_cf_token(self.config.site,self.config.sitekey,method=self.config.cf_api_method,url=self.config.cf_api_url,authToken=self.config.cf_api_key)
         json_data = {
