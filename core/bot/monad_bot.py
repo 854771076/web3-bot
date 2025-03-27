@@ -47,7 +47,7 @@ def get_signature(url, params=None):
     result["X-API-Timestamp"] = n
 
     hmac_func = c()
-    i = hmac_func(f"8567-{n}", "monad-secret")
+    i = hmac_func(f"36657-{n}", "monad-secret")
     s = ''.join([i[e] for e in range(1, len(i), 2)])
     result["X-APP-ID"] = s
 

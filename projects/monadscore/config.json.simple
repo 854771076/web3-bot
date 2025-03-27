@@ -1,0 +1,29 @@
+{
+    "rpc_url":"https://testnet-rpc.monad.xyz",
+    "proxy":"http://xxx:xxx@xxx:xxx",
+    "site":"https://testnet.monad.xyz/",
+    "sitekey":"0x4AAAAAAA-3X4Nd7hf3mNGx",
+    "chain_id":10143,
+    "account_path":"./data/account_monad.csv",
+    "cf_api_url":"http://127.0.0.1:3000/cf-clearance-scraper",
+    "cf_api_key":null,
+    "cf_api_method":"turnstile-min",
+    "invite_code":"drwMsZuq",
+    "RETRY_INTERVAL":3,
+    "RETRY_COUNT":3,
+    "max_worker":1,
+    "headers":{
+    "accept": "*/*",
+    "accept-language": "zh-CN,zh;q=0.9",
+    "cache-control": "no-cache",
+    "origin": "https://monadscore.xyz",
+    "pragma": "no-cache",
+    "priority": "u=1, i",
+    "referer": "https://monadscore.xyz",
+    "sec-ch-ua-mobile": "?0",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site",
+    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+    }
+}
