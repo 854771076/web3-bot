@@ -70,7 +70,7 @@ class MonadScoreBot(BaseBot):
             logger.info(f"账户:第{self.index}个地址,{self.wallet.address},claim_task {task} 中...")
             json_data = {
                 'wallet': self.wallet.address,
-                'taskId': 'task001',
+                'taskId': task,
             }
 
             response = requests.post('https://mscore.onrender.com/user/claim-task', json=json_data)
