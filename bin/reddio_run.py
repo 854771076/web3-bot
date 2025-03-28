@@ -13,8 +13,6 @@ if __name__ == '__main__':
         manager.run()
         time.sleep(60*20)
         manager.verify_all_task()
-    run()
-    # 执行后每过24小时执行一次
-    scheduler = BlockingScheduler()
-    scheduler.add_job(run, 'interval', hours=24)
-    scheduler.start()
+    while True:
+        run()
+        time.sleep(24*60*61)
