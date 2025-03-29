@@ -98,20 +98,25 @@ class MonadBot(BaseBot):
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},获取token信息失败,{data.get('message')}")
         return self.tokens
     def transfer_token_other(self):
-
+        
+        
         random_private_key=self.config.get_random_private_key()
         random_address=self.web3.eth.account.from_key(random_private_key).address
-        tokens=[i for i in self.get_token_info() if i.get('contractAddress')!='0x0000000000000000000000000000000000000000']
-        tokens=sorted(tokens,key=lambda x:float(x.get('balance')),reverse=True)
-        if not tokens:
-            logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},没有token,跳过")
-            return
-        token=tokens[0].get('contractAddress')
+        if not self.account.get('token_address'):
+            tokens=[i for i in self.get_token_info() if i.get('contractAddress')!='0x0000000000000000000000000000000000000000']
+            tokens=sorted(tokens,key=lambda x:float(x.get('balance')),reverse=True)
+            if not tokens:
+                logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},没有token,跳过")
+                return
+            token=tokens[0].get('contractAddress')
+            self.account['token_address']=token
+            self.config.save_accounts()
+        else:
+            token=self.account.get('token_address')
         contract_ERC20=self.web3.eth.contract(address=Web3.to_checksum_address(token),abi=ERC20_ABI)
         balance=contract_ERC20.functions.balanceOf(self.wallet.address).call()
         send_balance=balance*random.uniform(0.01,0.05)
-        
-
+            
         if not is_any_hours_away(self.account.get('last_token_transfer_time'),12):
             logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},12小时内已经token转账,跳过")
             return
@@ -177,11 +182,11 @@ class MonadBot(BaseBot):
             'referer': 'https://testnet.monad.xyz/',
         }
         session=self.get_new_session(headers)
-        requestVerification=self.get_verification_token(session)
-        if requestVerification:
-            headers.update(requestVerification)
-        else:
-            return self.get_faucet()
+        # requestVerification=self.get_verification_token(session)
+        # if requestVerification:
+        #     headers.update(requestVerification)
+        # else:
+        #     return self.get_faucet()
         
         visitorId=''.join(random.choices(string.ascii_uppercase + string.digits, k=32))
         token=get_cf_token(self.config.site,self.config.sitekey,method=self.config.cf_api_method,url=self.config.cf_api_url,authToken=self.config.cf_api_key)
@@ -191,7 +196,7 @@ class MonadBot(BaseBot):
             'cloudFlareResponseToken': token,
         }
         try:
-            response = session.post('https://faucet-claim.monadinfra.com/', headers=headers, json=json_data)
+            response = session.post('https://faucet-claim-2.monadinfra.com', headers=headers, json=json_data)
         except Exception as e:
             logger.error(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet失败,{e}")
             time.sleep(3)
