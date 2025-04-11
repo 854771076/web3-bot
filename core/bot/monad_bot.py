@@ -196,7 +196,7 @@ class MonadBot(BaseBot):
             'cloudFlareResponseToken': token,
         }
         try:
-            response = session.post('https://faucet-claim-2.monadinfra.com', headers=headers, json=json_data)
+            response = session.post('https://faucet-claim.molandak.org/', headers=headers, json=json_data)
         except Exception as e:
             logger.error(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet失败,{e}")
             time.sleep(3)
