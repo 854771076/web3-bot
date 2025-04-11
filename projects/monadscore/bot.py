@@ -25,8 +25,6 @@ class MonadScoreBot(BaseBot):
     
             
     def registe(self):
-        if self.account.get('registed'):
-            return
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},注册中...")
         json_data = {
             'wallet': self.wallet.address,
@@ -45,6 +43,24 @@ class MonadScoreBot(BaseBot):
             self.session.headers.update({'Authorization': f'Bearer {token}'})
         
         logger.success(f"账户:第{self.index}个地址,{self.wallet.address},注册成功")
+    def login(self):
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},登录中...")
+        json_data = {
+            'wallet': self.wallet.address,
+        }
+        response=self.session.post('https://mscore.onrender.com/user/login', json=json_data)
+        logger.success(f"账户:第{self.index}个地址,{self.wallet.address},登录成功")
+        # 登录后获取用户信息
+        response=self._handle_response(response)
+        data=response.json()
+        token=data.get('token')
+        if token:
+            self.session.headers.update({'Authorization': f'Bearer {token}'})
+
+        user=data.get('user')
+        self.account.update(user)
+        self.config.save_accounts()
+        
     def mining(self):
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},minting中...")
         timestamp = int(time.time() * 1000)  # 获取当前时间戳（毫秒）
@@ -93,6 +109,7 @@ class MonadScoreBotManager(BaseBotManager):
     def run_single(self,account):
         bot=MonadScoreBot(account,self.web3,self.config)
         bot.registe()
+        bot.login()
         try:
             bot.mining()
         except Exception as e:
