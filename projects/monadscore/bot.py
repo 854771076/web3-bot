@@ -39,6 +39,11 @@ class MonadScoreBot(BaseBot):
             self.account['registed']=True
             self.config.save_accounts()
         self.config.save_accounts()
+        data=response.json()
+        token=data.get('token')
+        if token:
+            self.session.headers.update({'Authorization': f'Bearer {token}'})
+        
         logger.success(f"账户:第{self.index}个地址,{self.wallet.address},注册成功")
     def mining(self):
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},minting中...")
