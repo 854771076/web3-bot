@@ -7,3 +7,4 @@ my_script.py
 agent
 *test*
 config.json
+*.csv
