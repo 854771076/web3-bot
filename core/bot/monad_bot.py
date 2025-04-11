@@ -203,7 +203,7 @@ class MonadBot(BaseBot):
             return self.get_faucet()
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet,{response.text}")
         time.sleep(3)
-        if 'Success' in response.text or 'Claimed' in response.text:
+        if 'success' in response.text.lower() or 'claimed' in response.text.lower():
             logger.success(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet成功")
             self.account['faucet']=True
             now=time.time()
