@@ -91,7 +91,10 @@ class TakerBot(BaseBot):
             data=self._handle_response(response)
             return data.get('data',{}).get('lastMiningTime')
         def start_mining():
-            response = self.session.post('https://lightmining-api.taker.xyz/assignment/startMining')
+            data={
+                "status":False
+            }
+            response = self.session.post('https://lightmining-api.taker.xyz/assignment/startMining',json=data)
             data=self._handle_response(response)
             msg=data.get('msg')
             if not self.account.get('mining_first'):
