@@ -43,7 +43,7 @@ class BaseBot():
             verify=False,
             timeout=600
         )
-        session.headers.update({'User-Agent': self.ua.chrome})
+        # session.headers.update({'User-Agent': self.ua.chrome})
         return session
     def _handle_response(self, response: requests.Response, retry_func=None) -> None:
         """处理响应状态"""

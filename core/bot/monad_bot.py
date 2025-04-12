@@ -192,17 +192,27 @@ class MonadBot(BaseBot):
         token=get_cf_token(self.config.site,self.config.sitekey,method=self.config.cf_api_method,url=self.config.cf_api_url,authToken=self.config.cf_api_key)
         json_data = {
             'address': self.wallet.address,
-            'visitorId': visitorId,
+            # 'visitorId': visitorId,
             'cloudFlareResponseToken': token,
         }
+        session.headers.update({
+           'x-fingerprint':visitorId 
+        })
         try:
             response = session.post('https://faucet-claim.molandak.org/', headers=headers, json=json_data)
+            response.raise_for_status()
         except Exception as e:
-            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet失败,{e}")
+            
+            if 'already claimed' in response.text.lower() or 'claimed already' in response.text.lower():
+                logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},faucet,已经领取过")
+                return
+            else:
+                logger.error(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet失败,{e},{response.text}")
             time.sleep(3)
             return self.get_faucet()
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet,{response.text}")
         time.sleep(3)
+
         if 'success' in response.text.lower() or 'claimed' in response.text.lower():
             logger.success(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet成功")
             self.account['faucet']=True
