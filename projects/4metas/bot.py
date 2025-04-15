@@ -116,9 +116,8 @@ class FourmetasBot(BaseBot):
                                     if 'Already finish task' in str(e):
                                         logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已完成")
                                         break
-                                    logger.error(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},完成失败,{e}")
-                                    self.completeMyTask(task.get('id'))
-                            time.sleep(20)
+                                    logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},完成失败,{e},重试中...")
+                                    time.sleep(20)                                    
                             while True:
                                 try:
                                     self.getMyTaskReward(task.get('id'))
@@ -126,9 +125,8 @@ class FourmetasBot(BaseBot):
                                     if 'Already' in str(e):
                                         logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已领取")
                                         break
-                                    logger.error(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},领取失败,{e}")
-                                    self.getMyTaskReward(task.get('id'))
-                            time.sleep(20)
+                                    logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},领取失败,{e},重试中...")
+                                    time.sleep(20)
                             break
                     except Exception as e:
                         
