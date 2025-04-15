@@ -117,7 +117,7 @@ class FourmetasBot(BaseBot):
                                         logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已完成")
                                         break
                                     self.completeMyTask(task.get('id'))
-                            time.sleep(10)
+                            time.sleep(20)
                             while True:
                                 try:
                                     self.getMyTaskReward(task.get('id'))
@@ -125,12 +125,12 @@ class FourmetasBot(BaseBot):
                                     if 'Already' in str(e):
                                         logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已领取")
                                         break
-                            time.sleep(10)
+                            time.sleep(20)
                             break
                     except Exception as e:
                         
                         logger.error(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},完成失败,{e}")
-                        time.sleep(10)
+                        time.sleep(20)
                     
         self.account['task']=True
         self.config.save_accounts()
