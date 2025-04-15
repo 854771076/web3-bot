@@ -109,7 +109,8 @@ class FourmetasBot(BaseBot):
                             break
                         else:
                             logger.info(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},开始完成")
-                            while True:
+                            errcount=0
+                            while errcount<3:
                                 try:
                                     self.completeMyTask(task.get('id'))
                                 except Exception as e:
@@ -117,8 +118,10 @@ class FourmetasBot(BaseBot):
                                         logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已完成")
                                         break
                                     logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},完成失败,{e},重试中...")
-                                    time.sleep(20)                                    
-                            while True:
+                                    time.sleep(random.randint(15,30))     
+                                    errcount+=1    
+                            errcount=0                           
+                            while errcount<3:
                                 try:
                                     self.getMyTaskReward(task.get('id'))
                                 except Exception as e:
@@ -126,12 +129,13 @@ class FourmetasBot(BaseBot):
                                         logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已领取")
                                         break
                                     logger.warning(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},领取失败,{e},重试中...")
-                                    time.sleep(20)
+                                    time.sleep(random.randint(15,30))
+                                    errcount+=1 
                             break
                     except Exception as e:
                         
                         logger.error(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},完成失败,{e}")
-                        time.sleep(20)
+                        time.sleep(random.randint(15,30))
                     
         self.account['task']=True
         self.config.save_accounts()
