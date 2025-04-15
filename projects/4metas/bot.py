@@ -102,16 +102,23 @@ class FourmetasBot(BaseBot):
             if name in ['dailyTask','checkInTask','dailyTask']:
                 logger.info(f"账户:第{self.index}个地址,{self.wallet.address},任务组:{name}")
                 for task in tasks:
-                    taskName= task.get('taskName')
-                    if task.get('status')==1:
-                        logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已完成")
-                        continue
-                    else:
-                        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},开始完成")
-                        self.completeMyTask(task.get('id'))
-                        time.sleep(10)
-                        self.getMyTaskReward(task.get('id'))
-                    time.sleep(10)
+                    while True:
+                        try:
+                            taskName= task.get('taskName')
+                            if task.get('status')==1:
+                                logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已完成")
+                                continue
+                            else:
+                                logger.info(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},开始完成")
+                                self.completeMyTask(task.get('id'))
+                                time.sleep(10)
+                                self.getMyTaskReward(task.get('id'))
+                                time.sleep(10)
+                                break
+                        except Exception as e:
+                            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},完成失败,{e}")
+                            time.sleep(10)
+                    
         self.account['task']=True
         self.config.save_accounts()
 
