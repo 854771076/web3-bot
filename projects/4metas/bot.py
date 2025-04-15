@@ -116,6 +116,9 @@ class FourmetasBot(BaseBot):
                                 time.sleep(10)
                                 break
                         except Exception as e:
+                            if 'Already finish task' in str(e):
+                                logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已完成")
+                                break
                             logger.error(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},完成失败,{e}")
                             time.sleep(10)
                     
