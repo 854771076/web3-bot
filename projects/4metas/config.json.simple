@@ -1,0 +1,24 @@
+{
+    "rpc_url":"https://andromeda.metis.io",
+    "proxy":"http://xxx:xxx@xxx:xxx",
+    "chain_id":1088,
+    "account_path":"projects/4metas/account.csv",
+    "main_wallet_private_key":"",
+    "invite_code":"7F7D64B3",
+    "RETRY_INTERVAL":3,
+    "RETRY_COUNT":3,
+    "max_worker":1,
+    "headers":{
+    "accept": "*/*",
+    "accept-language": "zh-CN,zh;q=0.9",
+    "cache-control": "no-cache",
+    "origin": "https://metish5.4metas.io/",
+    "pragma": "no-cache",
+    "priority": "u=1, i",
+    "referer": "https://metish5.4metas.io/",
+    "sec-ch-ua-mobile": "?0",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "same-site"
+    }
+}

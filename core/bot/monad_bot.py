@@ -208,12 +208,12 @@ class MonadBot(BaseBot):
                 return
             else:
                 logger.error(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet失败,{e},{response.text}")
-            time.sleep(3)
-            return self.get_faucet()
+                time.sleep(3)
+                self.get_faucet()
         logger.info(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet,{response.text}")
         time.sleep(3)
 
-        if 'success' in response.text.lower() or 'claimed' in response.text.lower():
+        if 'success' in response.text.lower():
             logger.success(f"账户:第{self.index}个地址,{self.wallet.address},获取faucet成功")
             self.account['faucet']=True
             now=time.time()
