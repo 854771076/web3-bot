@@ -184,7 +184,11 @@ class FourmetasBot(BaseBot):
         data=self._handle_response(response)
         metis=data.get('data',{}).get('metis')
         return metis
+    
     def transfer_eth(self):
+        if self.account.get('transfer')==True:
+            logger.info(f"账户:第{self.index}个地址,{self.wallet.address},ETH已转账")
+            return
         # 从主地址转账随机余额（0.023）到钱包地址，如果余额大于等于0.02eth则跳过
         balance=self.web3.eth.get_balance(self.wallet.address)
         if balance>self.web3.to_wei(0.02,'ether'):
@@ -197,11 +201,32 @@ class FourmetasBot(BaseBot):
                 'to': self.wallet.address,
                 'value': self.web3.to_wei(random.uniform(0.023,0.024),'ether'),
                 'gasPrice': self.web3.eth.gas_price, 
-                'gas': 200000,
+                'gas': 50000,
                 'nonce': self.web3.eth.get_transaction_count(self.main_wallet.address),
             } 
             tx_hash = send_transaction(self.web3, transaction, self.main_wallet.key)
-        receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+            receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
+        if receipt.status == 1:
+            logger.success(f"账户:第{self.index}个地址,{self.wallet.address},转账成功")
+            self.account['transfer']=True
+            self.config.save_accounts()
+        else:
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},转账失败,原因:{receipt}")
+    def transfer_eth_to_main(self):
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},转账中...")
+        balance=self.web3.eth.get_balance(self.wallet.address)
+        with lock:
+            gas_balance=self.web3.eth.gas_price*51000
+            transaction={
+                'from': self.wallet.address,
+                'to': self.main_wallet.address,
+                'value':balance-gas_balance ,
+                'gasPrice': self.web3.eth.gas_price, 
+                'gas': 50000,
+                'nonce': self.web3.eth.get_transaction_count(self.wallet.address),
+            } 
+            tx_hash = send_transaction(self.web3, transaction, self.wallet.key)
+            receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)
         if receipt.status == 1:
             logger.success(f"账户:第{self.index}个地址,{self.wallet.address},转账成功")
         else:
@@ -221,6 +246,40 @@ class FourmetasBot(BaseBot):
             logger.success(f"账户:第{self.index}个地址,{self.wallet.address},提现成功,获得 {metis} metis")
         else:
             logger.error(f"账户:第{self.index}个地址,{self.wallet.address},提现失败,{response.text}")
+    def getspinNum(self):
+        json_data = {}
+        response = self.session.post('https://ss.4metas.io/formetas/box/spinNum', json=json_data)
+        data=self._handle_response(response)
+        spinNum=int(data.get('data',0))
+        return spinNum
+    def spin(self,hashId):
+        json_data = {
+            'hashId': hashId,
+        }
+        response = self.session.post('https://ss.4metas.io/formetas/box/spinIt', json=json_data)
+        data=self._handle_response(response)
+        num=data.get('data',{}).get('text')
+        logger.success(f"账户:第{self.index}个地址,{self.wallet.address},spin成功,获得 {num} Metas")
+    def start_spin(self):
+        points=self.getspinNum()
+        if points<=0:
+            logger.info(f"账户:第{self.index}个地址,{self.wallet.address},次数不足,无法spin")
+            return
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},开始spin...")
+        lotteryContract = self.web3.eth.contract(address=lotteryContractAddress, abi=abi)
+        tx=lotteryContract.functions.enterLottery().build_transaction({
+                'from': self.wallet.address,
+                'gas': 2000000,
+                'gasPrice': self.web3.eth.gas_price,
+                'nonce': self.web3.eth.get_transaction_count(self.wallet.address), 
+            })
+        tx_hash=send_transaction(self.web3,tx,self.wallet.key)
+        receipt = self.web3.eth.wait_for_transaction_receipt(tx_hash)        
+        if receipt.status == 1:
+            self.spin(tx_hash.hex())
+            logger.success(f'账户:{self.wallet.address},spin成功,交易哈希:{tx_hash.hex()}')
+        else:
+            logger.error(f"账户:{self.wallet.address},spin失败,原因:{receipt}")
 
 
 class FourmetasBotManager(BaseBotManager):
@@ -239,6 +298,17 @@ class FourmetasBotManager(BaseBotManager):
                 logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},失败,原因:{e}")
         else:
             logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},points:{points},积分耗尽,退出")
+        num=bot.getspinNum()
+        while num>0:
+            try:
+                logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},num:{num}")
+                bot.start_spin()
+                num=bot.getspinNum()
+            except Exception as e:
+                logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},失败,原因:{e}")
+        else:
+            logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},num:{num},次数耗尽,退出")
+        bot.transfer_eth_to_main()
     def run_withdraw_single(self,account):
         bot=FourmetasBot(account,self.web3,self.config)
         bot.withdraw()
@@ -255,7 +325,16 @@ class FourmetasBotManager(BaseBotManager):
             'private_key':self.config.main_wallet_private_key,
         }
         bot=FourmetasBot(account,self.web3,self.config)
-
+        num=bot.getspinNum()
+        while num>0:
+            try:
+                logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},num:{num}")
+                bot.start_spin()
+                num=bot.getspinNum()
+            except Exception as e:
+                logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},失败,原因:{e}")
+        else:
+            logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},num:{num},次数耗尽,退出")
         points=bot.get_points()
         while points>=200:
             try:
