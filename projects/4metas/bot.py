@@ -107,7 +107,7 @@ class FourmetasBot(BaseBot):
                             taskName= task.get('taskName')
                             if task.get('status')==1:
                                 logger.debug(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},已完成")
-                                continue
+                                break
                             else:
                                 logger.info(f"账户:第{self.index}个地址,{self.wallet.address},任务:{taskName},开始完成")
                                 self.completeMyTask(task.get('id'))
