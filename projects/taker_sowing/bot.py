@@ -183,6 +183,10 @@ class TakerBot(BaseBot):
                 'taskId': str(taskId),
             }
             try:
+                cf_token=get_cf_token(self.config.site,self.config.sitekey,method=self.config.cf_api_method,url=self.config.cf_api_url,authToken=self.config.cf_api_key)
+                self.session.headers.update({
+                'cf-turnstile-token':cf_token 
+                })
                 response = self.session.post('https://sowing-api.taker.xyz/task/claim-reward', params=params)
                 data=self._handle_response(response)
                 logger.success(f"账户:{self.wallet.address},任务:{taskId},领取奖励成功,{data}")
