@@ -285,30 +285,35 @@ class FourmetasBot(BaseBot):
 class FourmetasBotManager(BaseBotManager):
     def run_single(self,account):
         bot=FourmetasBot(account,self.web3,self.config)
-        bot.complete_tasks()
-        bot.transfer_eth()
+        # bot.complete_tasks()
+        # bot.transfer_eth()
         time.sleep(20)
-        points=bot.get_points()
-        while points>=200:
-            try:
-                logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},points:{points}")
-                bot.open_box()
-                points=bot.get_points()
-            except Exception as e:
-                logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},失败,原因:{e}")
-        else:
-            logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},points:{points},积分耗尽,退出")
-        num=bot.getspinNum()
-        while num>0:
-            try:
-                logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},num:{num}")
-                bot.start_spin()
-                num=bot.getspinNum()
-            except Exception as e:
-                logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},失败,原因:{e}")
-        else:
-            logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},num:{num},次数耗尽,退出")
+        # points=bot.get_points()
+        # while points>=200:
+        #     try:
+        #         logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},points:{points}")
+        #         bot.open_box()
+        #         points=bot.get_points()
+        #     except Exception as e:
+        #         logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},失败,原因:{e}")
+        # else:
+        #     logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},points:{points},积分耗尽,退出")
+        # num=bot.getspinNum()
+        # while num>0:
+        #     try:
+        #         logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},num:{num}")
+        #         bot.start_spin()
+        #         num=bot.getspinNum()
+        #     except Exception as e:
+        #         logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},失败,原因:{e}")
+        # else:
+        #     logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},num:{num},次数耗尽,退出")
+        # 打印账户余额
+        balance=self.web3.eth.get_balance(bot.wallet.address)
+        balance=self.web3.from_wei(balance,'ether')
+        logger.info(f"账户:第{bot.index}个地址,{bot.wallet.address},余额: {balance}")
         bot.transfer_eth_to_main()
+        
     def run_withdraw_single(self,account):
         bot=FourmetasBot(account,self.web3,self.config)
         bot.withdraw()

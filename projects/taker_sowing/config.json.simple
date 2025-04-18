@@ -1,0 +1,23 @@
+{
+    "site":"https://sowing.taker.xyz/",
+    "sitekey":"0x4AAAAAABNqF8H4KF9TDs2O",
+    "cf_task":true,
+    "cf_api_url":"http://127.0.0.1:3000/solver",
+    "cf_api_key":null,
+    "cf_api_method":"turnstile-min",
+    "RETRY_INTERVAL":3,
+    "RETRY_COUNT":3,
+    "rpc_url":"https://rpc-mainnet.taker.xyz/",
+    "proxy":"http://xxx",
+    "chain_id":1125,
+    "account_path":"projects/taker_sowing/account.csv",
+    "invite_code":"RVPW12YT",
+    "max_worker":20,
+    "headers":{
+            "Accept": "application/json, text/plain, */*",
+            "Origin": "https://sowing.taker.xyz/",
+            "Pragma": "no-cache",
+            "Referer": "https://sowing.taker.xyz/"
+    }
+
+}
