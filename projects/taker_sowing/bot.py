@@ -222,9 +222,8 @@ class TakerBot(BaseBot):
                 except Exception as e:
                     logger.error(f"账户:{self.wallet.address},完成任务:assignmentId:{assignmentId},eventId:{eventId},失败,{e}")
                 time.sleep(3)
-            if success_count==len(taskEvent):
-                logger.success(f"账户:{self.wallet.address},任务:{assignmentId}完成")
-                claim_reward(assignmentId)
+            logger.success(f"账户:{self.wallet.address},任务:{assignmentId}完成")
+            claim_reward(assignmentId)
 
         assert self.account.get('registed'),"账户未注册"
         task_list=self.get_task()
