@@ -2,7 +2,7 @@
     "site":"https://sowing.taker.xyz/",
     "sitekey":"0x4AAAAAABNqF8H4KF9TDs2O",
     "cf_task":true,
-    "cf_api_url":"http://127.0.0.1:3000/solver",
+    "cf_api_url":"http://127.0.0.1:3000/cf-clearance-scraper",
     "cf_api_key":null,
     "cf_api_method":"turnstile-min",
     "RETRY_INTERVAL":3,
