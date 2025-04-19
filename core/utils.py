@@ -1030,7 +1030,7 @@ class XAuth:
         return auth_code,redirect_uri
 # @sleep_and_retry
 # @limits(calls=REQUESTS_PER_SECOND, period=ONE_SECOND)
-def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000',authToken=None,action=None,maxSize=2,maxNum=10):
+def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000',authToken=None,action=None,maxSize=10):
     data = {
             "url": site,
             "siteKey": siteKey,
@@ -1045,10 +1045,6 @@ def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000'
     if action:
         data.update({
             "action": action
-        })
-    if maxNum:
-        data.update({
-            "maxNum": maxNum
         })
     headers = {
         "Content-Type": "application/json"

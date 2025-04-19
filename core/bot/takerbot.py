@@ -105,8 +105,8 @@ class TakerBot(BaseBot):
             contract=self.web3.eth.contract(address=address,abi=abi)
             tx=contract.functions.active().build_transaction({
                 'from': self.wallet.address,
-                'gas': 200000,
-                'gasPrice': self.web3.eth.gas_price,
+                'gas': 1200000,
+                'gasPrice': int(self.web3.eth.gas_price*1.1),
                 'nonce': self.web3.eth.get_transaction_count(self.wallet.address), 
             })
             signed_txn = self.wallet.sign_transaction(tx)

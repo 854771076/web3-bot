@@ -34,7 +34,7 @@ class TakerBot(BaseBot):
         self.account.update(userinfo)
         self.config.save_accounts()
         return userinfo
-    def login(self):
+    def login(self,invite_code=None):
         def get_nonce():
             json_data = {
                 'walletAddress': self.wallet.address,
@@ -50,14 +50,20 @@ class TakerBot(BaseBot):
             logger.info(f"第{self.index}个账户:{self.wallet.address},token复用")
         else:
             if not self.account.get('registed'):
-                logger.warning(f"第{self.index}个账户:{self.wallet.address},未注册,注册中...")
+                
                 nonce=get_nonce()
+                if invite_code:
+                    invitationCode=invite_code
+                    
+                else:
+                    invitationCode=self.config.invite_code
+                logger.warning(f"第{self.index}个账户:{self.wallet.address},未注册,注册中...,邀请码:{invitationCode}")
                 json_data = {
                     'address': self.wallet.address,
                     'signature': get_sign(self.web3,self.wallet.key, nonce),
-                    "invitationCode":self.config.invite_code,
+                    "invitationCode":invitationCode,
                     'message': nonce,
-                }
+                    }
             else:
                 logger.warning(f"第{self.index}个账户:{self.wallet.address},token失效,登录中...")
                 nonce=get_nonce()
@@ -258,7 +264,47 @@ class TakerBotManager(BaseBotManager):
             logger.error(f"账户:{bot.wallet.address},获取用户信息失败,{e}")
     def run(self):
         with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
-            futures = [executor.submit(self.run_single, account) for account in self.accounts if not account.get('x_token_bad')]
+            futures = [executor.submit(self.run_single, account) for account in self.accounts]
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception as e:
+                    # logger.error(f"执行过程中发生错误: {e}")
+                    logger.exception(e)
+class TakerBotManager2(BaseBotManager):
+    def __init__(self, config_path,config2_path):
+        self.config=Config(config_path)
+        self.accounts=self.config.accounts
+        if self.config.proxy:
+            self.proxies = {
+                "http": self.config.proxy,
+                "https": self.config.proxy,
+            }
+            self.web3 = Web3(Web3.HTTPProvider(self.config.rpc_url,request_kwargs={"proxies": self.proxies}))
+        else:
+            self.web3 = Web3(Web3.HTTPProvider(self.config.rpc_url))
+            self.proxies =None
+        if not self.web3.is_connected():
+            logger.warning("无法连接到 RPC 节点,重试中...")
+            time.sleep(self.config.RETRY_INTERVAL)
+            self.__init__(config_path,config2_path)
+        self.config2=Config(config2_path)
+    def run_single(self,account):
+        bot=TakerBot(account,self.web3,self.config)
+        invitationCode=random.choice(self.config2.accounts).get('invitationCode')
+        bot.login(invitationCode)
+        try:
+            bot.mining()
+        except Exception as e:
+            logger.error(f"账户:{bot.wallet.address},挖矿失败,{e}")
+        bot.done_tasks()
+        try:
+            bot.get_user_info()
+        except Exception as e:
+            logger.error(f"账户:{bot.wallet.address},获取用户信息失败,{e}")
+    def run(self):
+        with ThreadPoolExecutor(max_workers=self.config.max_worker) as executor:
+            futures = [executor.submit(self.run_single, account) for account in self.accounts]
             for future in as_completed(futures):
                 try:
                     future.result()
