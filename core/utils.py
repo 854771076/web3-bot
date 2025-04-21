@@ -1050,13 +1050,14 @@ def get_cf_token(site,siteKey,method="turnstile-min",url='http://127.0.0.1:3000'
         "Content-Type": "application/json"
     }
     try:
-        response = requests.post(url, headers=headers, json=data)
+        response = requests.post(url, headers=headers, json=data,verify=False,timeout=300)
         response.raise_for_status()  # 检查请求是否成功
         result = response.json()
         logger.success(f"请求cf_token成功")
         return result["token"]
     except requests.RequestException as e:
         logger.exception(f"请求过程中发生错误: {e}")
+        return get_cf_token(site,siteKey,method,url,authToken,action,maxSize)
 #计算该时间戳1739267133秒后距离现在的时间是否有24小时
 @sleep_and_retry
 @limits(calls=REQUESTS_PER_SECOND, period=ONE_SECOND)

@@ -7,7 +7,7 @@
     "cf_api_method":"turnstile-min",
     "RETRY_INTERVAL":3,
     "RETRY_COUNT":3,
-    "rpc_url":"https://rpc-mainnet.taker.xyz/",
+    "rpc_url":"https://arb1.arbitrum.io/rpc",
     "proxy":"http://7b3cfd2186e372eeb74d:c4d3e9a5d04cf113@gw.dataimpulse.com:823",
     "chain_id":1125,
     "account_path":"projects/taker_sowing/account2.csv",

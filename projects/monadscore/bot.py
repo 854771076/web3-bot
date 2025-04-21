@@ -78,16 +78,32 @@ class MonadScoreBot(BaseBot):
         self.account.update(user)
         self.config.save_accounts()
         logger.success(f"账户:第{self.index}个地址,{self.wallet.address},minting成功")
+    def check_in(self):
+        logger.info(f"账户:第{self.index}个地址,{self.wallet.address},check_in中...")
+        json_data = {
+            'wallet': self.wallet.address,
+        }
+        response = self.session.post('https://mscore.onrender.com/user/check-in', json=json_data)
+        response=self._handle_response(response)
+        data=response.json()
+        if not  data.get('success'):
+            logger.error(f"账户:第{self.index}个地址,{self.wallet.address},check_in失败,{data.get('message')}")
+        logger.success(f"账户:第{self.index}个地址,{self.wallet.address},check_in成功")
     def claim_tasks (self):
         tasks=[
             'task001',
             'task002',
-            'task003'
+            'task003',
+            'task004',
+            'task005',
+            'task006',
+            'task007',
+            'task008',
         ]
         for task in tasks:
-            if self.account.get(f'task-{task}'):
+            if self.account.get(f'task-{task}') :
                 logger.info(f"账户:第{self.index}个地址,{self.wallet.address},claim_task {task} 已完成")
-                return 
+                continue 
             logger.info(f"账户:第{self.index}个地址,{self.wallet.address},claim_task {task} 中...")
             json_data = {
                 'wallet': self.wallet.address,
@@ -114,6 +130,11 @@ class MonadScoreBotManager(BaseBotManager):
             bot.mining()
         except Exception as e:
             logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},mining失败,原因:{e}")
+        try:
+            bot.check_in()
+        except Exception as e:
+            logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},check_in失败,原因:{e}")
+
         bot.claim_tasks()
        
     def run(self):
