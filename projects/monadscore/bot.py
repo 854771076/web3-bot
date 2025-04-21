@@ -110,7 +110,7 @@ class MonadScoreBot(BaseBot):
                 'taskId': task,
             }
 
-            response = requests.post('https://mscore.onrender.com/user/claim-task', json=json_data)
+            response = self.session.post('https://mscore.onrender.com/user/claim-task', json=json_data)
             response=self._handle_response(response)
             data=response.json()
             if not  data.get('success'):
