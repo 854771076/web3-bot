@@ -101,28 +101,31 @@ class MonadScoreBot(BaseBot):
             'task008',
         ]
         for task in tasks:
-            if self.account.get(f'task-{task}') :
-                logger.info(f"账户:第{self.index}个地址,{self.wallet.address},claim_task {task} 已完成")
-                continue 
-            logger.info(f"账户:第{self.index}个地址,{self.wallet.address},claim_task {task} 中...")
-            json_data = {
-                'wallet': self.wallet.address,
-                'taskId': task,
-            }
+            try:
+                if self.account.get(f'task-{task}') :
+                    logger.info(f"账户:第{self.index}个地址,{self.wallet.address},claim_task {task} 已完成")
+                    continue 
+                logger.info(f"账户:第{self.index}个地址,{self.wallet.address},claim_task {task} 中...")
+                json_data = {
+                    'wallet': self.wallet.address,
+                    'taskId': task,
+                }
 
-            response = self.session.post('https://mscore.onrender.com/user/claim-task', json=json_data)
-            # response=self._handle_response(response)
-            data=response.json()
-            if not  data.get('success'):
-                logger.error(f"账户:第{self.index}个地址,{self.wallet.address},claim-task失败,{data.get('message')}")
-            else:
-                logger.success(f"账户:第{self.index}个地址,{self.wallet.address},claim-task成功")
-            if not self.account.get(f'task-{task}'):
-                self.account[f'task-{task}']=True
+                response = self.session.post('https://mscore.onrender.com/user/claim-task', json=json_data)
+                # response=self._handle_response(response)
+                data=response.json()
+                if not  data.get('success'):
+                    logger.error(f"账户:第{self.index}个地址,{self.wallet.address},claim-task失败,{data.get('message')}")
+                else:
+                    logger.success(f"账户:第{self.index}个地址,{self.wallet.address},claim-task成功")
+                if not self.account.get(f'task-{task}'):
+                    self.account[f'task-{task}']=True
+                    self.config.save_accounts()
+                user=data.get('user')
+                self.account.update(user)
                 self.config.save_accounts()
-            user=data.get('user')
-            self.account.update(user)
-            self.config.save_accounts()
+            except Exception as e:
+                logger.error(f"账户:第{self.index}个地址,{self.wallet.address},claim_task {task} 失败,{e}")
 class MonadScoreBotManager(BaseBotManager):
     def run_single(self,account):
         bot=MonadScoreBot(account,self.web3,self.config)
