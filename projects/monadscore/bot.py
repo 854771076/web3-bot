@@ -111,10 +111,12 @@ class MonadScoreBot(BaseBot):
             }
 
             response = self.session.post('https://mscore.onrender.com/user/claim-task', json=json_data)
-            response=self._handle_response(response)
+            # response=self._handle_response(response)
             data=response.json()
             if not  data.get('success'):
-                logger.error(f"账户:第{self.index}个地址,{self.wallet.address},minting失败,{data.get('message')}")
+                logger.error(f"账户:第{self.index}个地址,{self.wallet.address},claim-task失败,{data.get('message')}")
+            else:
+                logger.success(f"账户:第{self.index}个地址,{self.wallet.address},claim-task成功")
             if not self.account.get(f'task-{task}'):
                 self.account[f'task-{task}']=True
                 self.config.save_accounts()
