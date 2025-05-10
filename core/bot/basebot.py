@@ -71,14 +71,17 @@ class BaseBotManager():
                 "http": self.config.proxy,
                 "https": self.config.proxy,
             }
-            self.web3 = Web3(Web3.HTTPProvider(self.config.rpc_url,request_kwargs={"proxies": self.proxies}))
+            if hasattr(self.config,'rpc_url'):
+                self.web3 = Web3(Web3.HTTPProvider(self.config.rpc_url,request_kwargs={"proxies": self.proxies}))
         else:
-            self.web3 = Web3(Web3.HTTPProvider(self.config.rpc_url))
+            if hasattr(self.config,'rpc_url'):
+                self.web3 = Web3(Web3.HTTPProvider(self.config.rpc_url))
             self.proxies =None
-        if not self.web3.is_connected():
-            logger.warning("无法连接到 RPC 节点,重试中...")
-            time.sleep(self.config.RETRY_INTERVAL)
-            self.__init__(config_path)
+        if hasattr(self,'web3'):
+            if not self.web3.is_connected():
+                logger.warning("无法连接到 RPC 节点,重试中...")
+                time.sleep(self.config.RETRY_INTERVAL)
+                self.__init__(config_path)
     def run_single(self,account):
         pass
     def run(self):

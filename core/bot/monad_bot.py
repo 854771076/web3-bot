@@ -515,17 +515,17 @@ class MonadBot(BaseBot):
 class MonadBotManager(BaseBotManager):
     def run_single(self,account):
         bot=MonadBot(account,self.web3,self.config)
-        bot.get_faucet()
-        try:
-            bot.transfer_token_other()
-        except Exception as e:
-            logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},transfer_token_other失败,原因:{e}")
-        bot.set_contract()
+        # bot.get_faucet()
+        # try:
+        #     bot.transfer_token_other()
+        # except Exception as e:
+        #     logger.error(f"账户:第{bot.index}个地址,{bot.wallet.address},transfer_token_other失败,原因:{e}")
+        # bot.set_contract()
         bot.transfer_eth_other()
-        bot.checkin()
-        bot.mint_nfts()
-        bot.deplay_nft()
-        bot.mint_other_nft()
+        # bot.checkin()
+        # bot.mint_nfts()
+        # bot.deplay_nft()
+        # bot.mint_other_nft()
 
         # bot.registe()
         # bot.transfer_eth()

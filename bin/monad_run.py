@@ -8,6 +8,11 @@ if __name__ == '__main__':
     config_path='./config/config_monad.json'
     manager=MonadBotManager(config_path)
     while True:
+        start_time = time.time()
         logger.info('run')
         manager.run()
-        time.sleep(24*60*61)
+        end_time = time.time()
+        logger.info(f"run time: {end_time - start_time}")
+        # 执行时间小于一天，休眠到一天
+        if end_time - start_time < 24*60*61:
+            time.sleep(24*60*61 - (end_time - start_time))

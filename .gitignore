@@ -9,3 +9,8 @@ agent
 config.json
 config2.json
 *.csv
+node_modules
+.vscode
+.env
+*.log
+*.tmpw
